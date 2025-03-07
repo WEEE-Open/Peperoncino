@@ -1,0 +1,5 @@
+vpype[all]
+vpype-gcode
+pyserial
+typer
+tqdm
