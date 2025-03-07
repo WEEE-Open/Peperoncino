@@ -1,0 +1,27 @@
+[project]
+name = "peperoncino-backend"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "Francesco Basile",email = "59255877+parmigggiana@users.noreply.github.com"}
+]
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "pyserial (>=3.5,<4.0)",
+]
+
+[tool.poetry.group.cli.dependencies]
+typer = "^0.15.2"
+
+[tool.poetry]
+packages = [{include = "peperoncino_backend", from = "src"}]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[project.scripts]
+cli =  'peperoncino_backend:main_cli'
+server = 'peperoncino_backend:main_server'

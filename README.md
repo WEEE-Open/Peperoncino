@@ -8,4 +8,10 @@ This repository includes three sub-projects:
 - **Backend** - Software capable of communicating with the board through serial
 - **Frontend** - Optional Web Interface for the backend
 
+## Setup
+The backend can be installed with poetry install (soon to be a PyPi package)
+poetry env use python
+poetry install
+
 ## Usage
+poetry run cli
