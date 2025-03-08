@@ -14,7 +14,7 @@ dependencies = [
 
 [project.optional-dependencies]
 cli = [ "typer>=0.15.2", "tqdm (>=4.67.1,<5.0.0)" ]
-server = [ "fastapi>=0.68.0", "uvicorn>=0.15.0" ]
+server = [ "fastapi>=0.68.0", "uvicorn>=0.15.0", "python-multipart (>=0.0.20,<0.0.21)" ]
 
 [tool.poetry]
 packages = [{include = "peperoncino_backend", from = "src"}]

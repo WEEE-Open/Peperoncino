@@ -7,6 +7,7 @@ from .lib import Plotter
 
 load_dotenv()
 
+
 def main():
     app = typer.Typer()
 

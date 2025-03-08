@@ -12,8 +12,9 @@ except ImportError:
 
 log = logging.getLogger(__name__)
 
+
 class Plotter:
-    def __init__(self, port: str):
+    def __init__(self, port: str = None):
         self.port = port
 
     @property

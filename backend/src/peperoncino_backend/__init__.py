@@ -5,10 +5,12 @@ from dotenv import load_dotenv
 
 try:
     from rich.logging import RichHandler
+
     handler = RichHandler()
     FORMAT = "%(message)s"
 except ImportError:
     from logging import StreamHandler
+
     handler = StreamHandler()
     FORMAT = "[%(levelname)s] %(name)s : %(message)s"
 
@@ -21,7 +23,9 @@ if isinstance(debug, str):
     else:
         debug = False
 
-logging.basicConfig(level=logging.DEBUG if debug else logging.INFO, format=FORMAT, handlers=[handler])
+logging.basicConfig(
+    level=logging.DEBUG if debug else logging.INFO, format=FORMAT, handlers=[handler]
+)
 
 from .cli import main as main_cli
 from .server import main as main_server
