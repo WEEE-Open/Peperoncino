@@ -1,57 +1,85 @@
-from enum import Enum
-import struct
-import serial
 import logging
+import struct
+
+import serial
 
 from .consts import MAX_FILE_SIZE
 
+try:
+    from tqdm import tqdm
+except ImportError:
+    tqdm = lambda _: _
+
 log = logging.getLogger(__name__)
 
-try:
-    arduino = serial.Serial(port='/dev/ttyUSB0', baudrate=115200, timeout=.1, write_timeout=None)
-    # arduino.set_low_latency_mode(True)
-except serial.SerialException:
-    log.warning("Port not found. Using debug mode.")
-    arduino = None
+class Plotter:
+    def __init__(self, port: str):
+        self.port = port
 
-def safe_write(data):
-    if isinstance(data, str):
-        data = data.encode('ascii')
+    @property
+    def port(self):
+        return self._port
 
-    if arduino:
-        log.debug(f"writing {data}")
-        arduino.write(data)
-    else:
-        log.debug(f"would write {data}")
+    @port.setter
+    def port(self, value):
+        if not hasattr(self, "_port") or value != self._port:
+            self.serial = self._connect(value)
+        self._port = value
 
-def start():
-    safe_write(struct.pack('B', 0x00))
+    def _connect(self, serial_port: str):
+        if not serial_port:
+            log.warning("No port provided. Using debug mode.")
+            return None
 
-def pause():
-    safe_write(struct.pack('B', 0x01))
+        try:
+            arduino = serial.Serial(
+                port=serial_port, baudrate=115200, timeout=0.1, write_timeout=None
+            )
+            # arduino.set_low_latency_mode(True)
+            self.arduino = arduino  # type: ignore
+            log.debug(f"Connected to {serial_port}")
+        except serial.SerialException:
+            log.warning("Port not found. Using debug mode.")
+            arduino = None
 
-def reset():
-    safe_write(struct.pack('B', 0x03))
+        return arduino
 
-def send(file_path: str):
-    log.info(f"Sending file: {file_path}")
-    with open(file_path, 'r') as f:
-        data = f.readlines()
-        if len(data) <= MAX_FILE_SIZE:
-            safe_write(struct.pack('B', 0x02))
+    def safe_write(self, data):
+        if isinstance(data, str):
+            data = data.encode("ascii")
+
+        if self.serial:
+            log.debug(f"writing {data}")
+            self.serial.write(data)
         else:
-            debug_console.print("FILE TOO BIG: ONLINE MODE ON")
-            safe_write(struct.pack('B', 0x04))
+            log.debug(f"would write {data}")
 
-        safe_write(struct.pack('I', len(data)))
-        # safe_write(normalize_gcode(data))
-        itr = data
-        if not DEBUG:
-            itr = tqdm(list(itr))
-        with open("normalized.gcode", "w") as fs:
-            for line in itr:
-                fs.write(line)
-                # i = 0
+    def start(self):
+        self.safe_write(struct.pack("B", 0x00))
 
-                safe_write(line)
-                # time.sleep(0.1)
+    def pause(self):
+        self.safe_write(struct.pack("B", 0x01))
+
+    def reset(self):
+        self.safe_write(struct.pack("B", 0x03))
+
+    def send(self, file_path: str):
+        log.info(f"Sending file: {file_path}")
+
+        try:
+            with open(file_path, "r") as f:
+                data = f.readlines()
+        except FileNotFoundError:
+            log.error(f"File not found: {file_path}")
+            return
+
+        if len(data) <= MAX_FILE_SIZE:
+            self.safe_write(struct.pack("B", 0x02))
+        else:
+            log.info("FILE TOO BIG: ONLINE MODE ON")
+            self.safe_write(struct.pack("B", 0x04))
+
+        self.safe_write(struct.pack("I", len(data)))
+        itr = tqdm(list(data))
+        for line in itr:
+            self.safe_write(line)

@@ -9,14 +9,19 @@ readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "pyserial (>=3.5,<4.0)",
+    "dotenv (>=0.9.9,<0.10.0)",
 ]
 
-[tool.poetry.group.cli.dependencies]
-typer = "^0.15.2"
+[project.optional-dependencies]
+cli = [ "typer>=0.15.2", "tqdm (>=4.67.1,<5.0.0)" ]
+server = [ "fastapi>=0.68.0", "uvicorn>=0.15.0" ]
 
 [tool.poetry]
 packages = [{include = "peperoncino_backend", from = "src"}]
 
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.9.10"
+isort = "^6.0.1"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]

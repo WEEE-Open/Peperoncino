@@ -3,8 +3,10 @@
 .vscode/c_cpp_properties.json
 .vscode/launch.json
 .vscode/ipch
-
+.direnv
+flake.lock
 __pycache__
 .venv
+.ruff_cache
 *.gcode
 *.svg

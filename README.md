@@ -10,8 +10,16 @@ This repository includes three sub-projects:
 
 ## Setup
 The backend can be installed with poetry install (soon to be a PyPi package)
-poetry env use python
-poetry install
+`poetry install --all-extras`
+or if you want to install exclusively the cli/server dependencies
+`poetry install -E cli`
+`poetry install -E server`
 
 ## Usage
-poetry run cli
+`poetry run cli [COMMAND]`
+The available commands are:
+- `start` - start or resume the drawing job
+- `pause` - pause the drawing job
+- `reset` - reset the drawing job (restart from line 0)
+- `send $path` - send a file. The path to a valid gcode file must be specified.
+
