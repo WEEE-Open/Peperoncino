@@ -2,6 +2,7 @@ import logging
 import struct
 
 import serial
+import serial.tools.list_ports
 
 from .consts import MAX_FILE_SIZE
 
@@ -84,3 +85,21 @@ class Plotter:
         itr = tqdm(list(data))
         for line in itr:
             self.safe_write(line)
+
+def get_available_ports() -> list[dict]:
+    def jsonserialize(device):
+        return {
+            "device": device.device,
+            "name": device.name,
+            "description": device.description,
+            "hwid": device.hwid,
+            "vid": device.vid,
+            "pid": device.pid,
+            "serial_number": device.serial_number,
+            "location": device.location,
+            "manufacturer": device.manufacturer,
+            "product": device.product,
+            "interface": device.interface,
+        }
+    ports = sorted(serial.tools.list_ports.comports(include_links=False))
+    return [jsonserialize(port) for port in ports]

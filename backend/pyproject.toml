@@ -6,7 +6,7 @@ authors = [
     {name = "Francesco Basile",email = "59255877+parmigggiana@users.noreply.github.com"}
 ]
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.10,<3.13"
 dependencies = [
     "pyserial (>=3.5,<4.0)",
     "dotenv (>=0.9.9,<0.10.0)",
@@ -14,7 +14,8 @@ dependencies = [
 
 [project.optional-dependencies]
 cli = [ "typer>=0.15.2", "tqdm (>=4.67.1,<5.0.0)" ]
-server = [ "fastapi>=0.68.0", "uvicorn>=0.15.0", "python-multipart (>=0.0.20,<0.0.21)" ]
+server = [ "fastapi[standard]>=0.68.0", "vpype (>=1.14.0,<2.0.0)", "vpype-gcode (>=0.13.0,<0.14.0)" ]
+all = [ "typer>=0.15.2", "tqdm (>=4.67.1,<5.0.0)", "fastapi[standard]>=0.68.0", "vpype (>=1.14.0,<2.0.0)", "vpype-gcode (>=0.13.0,<0.14.0)" ]
 
 [tool.poetry]
 packages = [{include = "peperoncino_backend", from = "src"}]
@@ -28,5 +29,4 @@ requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [project.scripts]
-cli =  'peperoncino_backend:main_cli'
-server = 'peperoncino_backend:main_server'
+peperoncino_backend =  'peperoncino_backend:main'

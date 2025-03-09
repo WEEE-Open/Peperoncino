@@ -1,14 +1,15 @@
+import os
 from pathlib import Path
 
 import uvicorn
-from fastapi import FastAPI, File, UploadFile
+from fastapi import FastAPI, APIRouter, File, UploadFile
 from fastapi.responses import JSONResponse
 
-from .lib import Plotter
+from . import lib
 
 app = FastAPI()
 
-plotter = Plotter()
+plotter = lib.Plotter()
 
 files_path = "files/"
 Path(files_path).mkdir(parents=True, exist_ok=True)
@@ -18,21 +19,25 @@ jobs = [f"{f}" for f in Path(files_path).iterdir() if f.is_file()]
 
 @app.post("/start")
 async def start():
-    # Implement your start logic here
+    plotter.start()
     return JSONResponse(content={"message": "Started"}, status_code=200)
 
 
 @app.post("/pause")
 async def pause():
-    # Implement your pause logic here
+    plotter.pause()
     return JSONResponse(content={"message": "Paused"}, status_code=200)
 
 
 @app.post("/reset")
 async def reset():
-    # Implement your reset logic here
+    plotter.reset()
     return JSONResponse(content={"message": "Reset"}, status_code=200)
 
+
+@app.get("/queue")
+async def get_jobs():
+    return JSONResponse(content={"jobs": jobs}, status_code=200)
 
 @app.post("/queue")
 async def append_file(file: UploadFile = File(...)):
@@ -42,6 +47,7 @@ async def append_file(file: UploadFile = File(...)):
         pass
 
     if file.content_type == "image/svg+xml":
+        # use vpype to convert the svg to gcode
         pass
 
     if file.content_type == "text/plain":
@@ -58,30 +64,25 @@ async def append_file(file: UploadFile = File(...)):
         content={"filename": file.filename, "message": "File received"}, status_code=200
     )
 
+@app.get("/ports")
+async def get_available_ports():
+    return JSONResponse(content=lib.get_available_ports(), status_code=200)
 
-@app.get("/port")
+@app.get("/ports/selected")
 async def get_port():
     return JSONResponse(content={"port": plotter.port}, status_code=200)
 
 
-@app.post("/port")
+@app.post("/ports/selected")
 async def set_port(port: str):
     plotter.port = port
     return JSONResponse(content={"message": f"Port set to {port}"}, status_code=200)
-
-
-@app.get("/queue")
-async def get_jobs():
-    # Implement your get jobs logic here
-    return JSONResponse(content={"jobs": []}, status_code=200)
-
 
 def main():
     uvicorn.run(
         "peperoncino_backend.server:app",
         host="0.0.0.0",
-        port=8000,
+        port=int(os.getenv("PEPERONCINO_BACKEND_PORT", 3000)),
         log_level="info",
-        reload=True,
         workers=2,
     )
