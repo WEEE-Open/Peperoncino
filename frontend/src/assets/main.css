@@ -1,0 +1,42 @@
+@import "tailwindcss";
+@import './base.css';
+
+* {
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+#app {
+  height: 100vh;
+  margin: 0 auto;
+  padding: 1rem;
+  font-weight: normal;
+}
+
+a,
+.green {
+  text-decoration: none;
+  color: rgb(189, 60, 0);
+  transition: 0.4s;
+  padding: 3px;
+}
+
+@media (hover: hover) {
+  a:hover {
+    background-color: hsla(22, 100%, 37%, 0.2);
+    border-radius: 5px;
+  }
+}
+
+/* @media (min-width: 1024px) {
+  body {
+    display: flex;
+    place-items: center;
+  }
+
+  #app {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    padding: 0 2rem;
+  }
+} */
