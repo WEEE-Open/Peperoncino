@@ -19,6 +19,8 @@ log = logging.getLogger(__name__)
 
 class Plotter:
     def __init__(self, port: str = None):
+        self._running = False
+        self._uploaded = None
         self._speed = 100
         if port is None:
             ports = get_available_ports()
@@ -53,6 +55,10 @@ class Plotter:
         self.port = port
 
     @property
+    def state(self):
+        return self._uploaded, self._running
+
+    @property
     def port(self):
         return self._port
 
@@ -77,7 +83,7 @@ class Plotter:
             # Delay is 0 for speed 200, ~10 for speed 100 and 50 for speed 0
             delay = (value - 200) ** 2 / 800
             self.safe_write(struct.pack("B", 0x05))
-            self.safe_write(struct.pack("I", delay))
+            self.safe_write(struct.pack("d", delay))
 
     def _connect(self, serial_port: str):
         if not serial_port:
@@ -109,9 +115,12 @@ class Plotter:
 
     def start(self):
         self.safe_write(struct.pack("B", 0x00))
+        self._running = True
+        # TODO: Start a thread to wait for the plotter to send a stop signal
 
     def pause(self):
         self.safe_write(struct.pack("B", 0x01))
+        self._running = False
 
     def reset(self):
         self.safe_write(struct.pack("B", 0x03))
@@ -132,10 +141,12 @@ class Plotter:
             log.info("FILE TOO BIG: ONLINE MODE ON")
             self.safe_write(struct.pack("B", 0x04))
 
+        self._uploaded = file_path
         self.safe_write(struct.pack("I", len(data)))
         itr = tqdm(list(data))
         for line in itr:
             self.safe_write(line)
+
 
 
 def get_available_ports() -> list[dict]:

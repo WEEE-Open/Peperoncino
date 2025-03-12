@@ -24,7 +24,7 @@ files_path = "files/"
 Path(files_path).mkdir(parents=True, exist_ok=True)
 # initialize 'jobs' list with the files in the 'files' directory
 default_jobs = [f"{f.stem}" for f in Path(files_path).iterdir() if f.is_file()]
-jobs = default_jobs
+jobs = default_jobs.copy()
 
 
 @app.get("/")
@@ -95,7 +95,7 @@ async def delete_job(job: str):
 @app.post("/queue/{job}")
 async def send_job(job: str):
     if job in jobs:
-        plotter.send(job)
+        plotter.send(Path(files_path, job + ".gcode"))
         return JSONResponse(content={"message": "Job sent"}, status_code=200)
     return JSONResponse(content={"message": "Job not found"}, status_code=404)
 
@@ -135,6 +135,16 @@ async def set_speed(request: Request):
             content={"message": f"Speed set to {speed}"}, status_code=200
         )
     return JSONResponse(content={"message": "Speed not provided"}, status_code=400)
+
+
+@app.get("/state")
+async def get_state():
+    uploaded, running = plotter.state
+    data = {
+        "uploaded": uploaded.stem if uploaded else None,
+        "running": running,
+    }
+    return JSONResponse(content=data, status_code=200)
 
 
 def main():

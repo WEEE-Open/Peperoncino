@@ -36,7 +36,7 @@ void move(double x, double y, bool fast = false)
     currentX = x;
     currentY = y;
     // Serial.printf("(a) Wating %f ms\n", t);
-    delay(t);
+    delay(t/2);
   }
   else
   {

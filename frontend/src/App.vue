@@ -1,23 +1,23 @@
 <script lang="ts">
 import SettingsPanel from './components/SettingsPanel.vue'
-import SerialPortPanel from './components/SerialPortPanel.vue'
 import Queue from './components/Queue.vue'
 import { Unplug } from 'lucide-vue-next';
 
 export default {
     components: {
         SettingsPanel,
-        SerialPortPanel,
         Unplug,
         Queue
     },
     data() {
         return {
-            serverURL: 'http://localhost:8000',
+            serverURL: 'http://localhost:3000',
             connectionOk: false,
             serialPorts: [] as string[],
             settingsPanelVisible: false,
-            serialPortPanelVisible: false
+            serialPortPanelVisible: false,
+            uploaded: null as string | null,
+            running: false
         }
     },
     methods: {
@@ -59,6 +59,26 @@ export default {
                 .catch(error => {
                     console.error('There has been a problem with the connection:', error);
                 });
+        },
+        fetchState() {
+            fetch(`${this.serverURL}/state`)
+                .then(response => {
+                    if (!response.ok) {
+                        console.log(response);
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // uploaded: string
+                    // running: boolean
+                    this.uploaded = data.uploaded;
+                    this.running = data.running;
+                }).catch(error => {
+                    console.error('There has been a problem with the connection:', error
+
+                    );
+                });
         }
     },
     watch: {
@@ -71,23 +91,34 @@ export default {
         connectionOk(newStatus: boolean, oldStatus: boolean) {
             if (newStatus) {
                 this.fetchSerialPorts();
+                this.fetchState();
+            }
+            else {
+                this.serialPorts = [];
+                this.uploaded = null;
+                this.running = false;
             }
         }
     },
+    beforeMount() {
+        this.checkConnection();
+    },
+    beforeUpdate() {
+        this.checkConnection();
+    }
 
 }
 </script>
 
 <template>
-    <header class="header">
-        <div class="flex flex-row items-center w-full justify-between md:px-4 pb-4">
+    <header class="header" @dragover.prevent @drop.prevent>
+        <div class="flex flex-row items-center w-full justify-between pb-4 md:px-4 lg:px-8">
             <div class="flex items-center gap-2 md:gap-4 cursor-default" @mousedown.prevent @selectstart.prevent>
-                <!-- <img alt="Peperoncino logo" class="logo" src="./assets/logo.svg" width="24" height="24" /> -->
-                <h1 class="text-2xl md:text-3xl pb-1">🌶️</h1>
-                <h1 class="text-xl md:text-2xl font-medium tracking-widest">PEPERONCINO</h1>
+                <h1 class="pb-1 text-2xl md:text-3xl ">🌶️</h1>
+                <h1 class="font-medium tracking-widest text-xl md:text-2xl md:pl-1 lg:pl-3">PEPERONCINO</h1>
             </div>
-            <div class="flex items-center gap-2 md:gap-4">
-                <button id="serial-port-icon" class="w-8 h-8 cursor-pointer" @click="toggleSerialPortPanel">
+            <div class="flex items-center gap-1 md:gap-2 lg:gap-4">
+                <button id="serial-port-icon" class="w-8 h-8">
                     <Unplug
                         :class="{ 'text-green-500 dark:text-green-600': connectionOk, 'text-red-500 dark:text-red-600': !connectionOk }" />
                 </button>
@@ -101,13 +132,12 @@ export default {
             </div>
         </div>
     </header>
-    <main class="main h-full">
+    <main class="main h-full" @dragover.prevent @drop.prevent>
         <SettingsPanel v-show="settingsPanelVisible" :toggleSettingsPanel="toggleSettingsPanel" :serverURL="serverURL"
-            :setServerURL="(url) => { serverURL = url }" />
-        <SerialPortPanel v-show="serialPortPanelVisible" :toggleSerialPortPanel="toggleSerialPortPanel"
-            :fetchSerialPorts="fetchSerialPorts" :options="serialPorts" :serverURL="serverURL"
-            :connectionOk="connectionOk" />
-        <Queue :connectionOk="connectionOk" :serverURL="serverURL" />
+            :setServerURL="(url) => { serverURL = url }" :connectionOk="connectionOk" :options="serialPorts"
+            :fetchSerialPorts="fetchSerialPorts" />
+        <Queue :connectionOk="connectionOk" :serverURL="serverURL" :uploaded="uploaded" :running="running"
+            :fetchState="fetchState" />
     </main>
 </template>
 
