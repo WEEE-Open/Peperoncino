@@ -58,6 +58,10 @@ async def get_jobs():
 
 @app.post("/queue")
 async def append_file(file: UploadFile = File(...)):
+
+    #Create a temporary file to store the uploaded file
+    with open(Path(files_path, file.filename), "wb") as f:
+        f.write(file.file.read())
     # If the file is a raster image, convert it to a gcode file
     gcode_file = []
     name = "".join(file.filename.split(".")[:-1])
@@ -65,7 +69,7 @@ async def append_file(file: UploadFile = File(...)):
         case "text/plain":
             gcode_file = file.file.readlines()
         case "image/svg+xml":
-            gcode_file = convert_svg_to_gcode(file, name + ".gcode")
+            gcode_file = convert_svg_to_gcode(Path(files_path, file.filename), name + ".gcode")
         case "image/png" | "image/jpeg" | "image/jpg" | "image/bmp" | "image/gif" | "image/webp" | "application/pdf":
             pass
         case _:
@@ -75,9 +79,11 @@ async def append_file(file: UploadFile = File(...)):
             )
 
     # Save the file in the "files" directory
-    with open(Path(files_path, name + ".gcode"), "wb") as f:
+    with open(Path(files_path, name + ".gcode"), "w") as f:
         f.writelines(gcode_file)
-
+    # Delete the temporary file
+    if Path(files_path, file.filename).exists():
+        Path(files_path, file.filename).unlink()
     # Append the path to the list jobs
     jobs.append(name)
 

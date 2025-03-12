@@ -18,7 +18,7 @@ def convert_svg_to_gcode(input_svg, output_gcode, profile="gcodemm"):
         str: Contenuto del file G-code generato, o None in caso di errore
     """
     # Costruisci il comando come lista di argomenti
-    cmd_args = ["vpype", "read", input_svg, "gwrite", "-p", profile, output_gcode]
+    cmd_args = ["vpype", "read", str(Path(input_svg)), "gwrite", "-p", profile, output_gcode]
     
     # Reindirizza stdout e stderr per catturare l'output
     stdout_capture = io.StringIO()
@@ -56,4 +56,8 @@ def convert_svg_to_gcode(input_svg, output_gcode, profile="gcodemm"):
     finally:
         # Ripristina gli argomenti originali
         sys.argv = original_argv
+    # Delete the temporary file
+    if Path(output_gcode).exists():
+        print(f"Deleting {output_gcode}")
+        Path(output_gcode).unlink()
     return gcode_content
