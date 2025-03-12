@@ -5,6 +5,7 @@ import uvicorn
 from fastapi import FastAPI, File, Request, UploadFile
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
+from .gcode import convert_svg_to_gcode
 
 from . import lib
 
@@ -59,17 +60,20 @@ async def get_jobs():
 async def append_file(file: UploadFile = File(...)):
     # If the file is a raster image, convert it to a gcode file
     gcode_file = []
-    if file.content_type in ["image/png", "image/jpeg", "image/bmp"]:
-        pass
-
-    if file.content_type == "image/svg+xml":
-        # use vpype to convert the svg to gcode
-        pass
-
-    if file.content_type == "text/plain":
-        gcode_file = file.file.readlines()
-
     name = "".join(file.filename.split(".")[:-1])
+    match file.content_type:
+        case "text/plain":
+            gcode_file = file.file.readlines()
+        case "image/svg+xml":
+            gcode_file = convert_svg_to_gcode(file, name + ".gcode")
+        case "image/png" | "image/jpeg" | "image/jpg" | "image/bmp" | "image/gif" | "image/webp" | "application/pdf":
+            pass
+        case _:
+            return JSONResponse(
+                content={"filename": file.filename, "message": "Unsupported file format"}, 
+                status_code=400
+            )
+
     # Save the file in the "files" directory
     with open(Path(files_path, name + ".gcode"), "wb") as f:
         f.writelines(gcode_file)
