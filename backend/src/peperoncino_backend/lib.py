@@ -151,6 +151,15 @@ class Plotter:
         for line in itr:
             self.safe_write(line)
 
+    def _read_confirmation(self) -> int | None:
+        if self.serial:
+            line = self.serial.readline()
+            if line.startswith("Done"):
+                return int(line.strip().split(' ')[-1])
+
+    def check_confirmation(self):
+        if self._read_confirmation:
+            self._running = False
 
 def get_available_ports() -> list[dict]:
     def jsonserialize(device):

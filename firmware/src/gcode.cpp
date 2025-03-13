@@ -17,7 +17,7 @@ void parse_gcode_line(const char *line)
 
 
     strcpy(gcode, line);
-    Serial.printf("line: %s\n", gcode);
+    // Serial.printf("line: %s\n", gcode);
     cmd = strtok(gcode, " ");
 
     if (strcmp(cmd, "G00") == 0)

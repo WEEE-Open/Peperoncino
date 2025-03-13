@@ -11,6 +11,7 @@ void stop();
 void reset();
 void readGCodeFile();
 void readOnlineGCode();
+void send_confirmation_signal();
 
 const std::unordered_map<unsigned char, callback_function> comms_table = {
     { 0x00, start },

@@ -8,11 +8,11 @@
         {
             "name": "PlatformIO",
             "includePath": [
-                "/home/weeeadmin/Documenti/Peperone/board/include",
-                "/home/weeeadmin/Documenti/Peperone/board/src",
+                "/home/weeeadmin/Documenti/Peperoncino/firmware/include",
+                "/home/weeeadmin/Documenti/Peperoncino/firmware/src",
                 "/home/weeeadmin/.platformio/packages/framework-arduinoespressif32/libraries/WiFi/src",
-                "/home/weeeadmin/Documenti/Peperone/board/.pio/libdeps/esp32doit-devkit-v1/Adafruit MCP4725",
-                "/home/weeeadmin/Documenti/Peperone/board/.pio/libdeps/esp32doit-devkit-v1/Adafruit BusIO",
+                "/home/weeeadmin/Documenti/Peperoncino/firmware/.pio/libdeps/esp32doit-devkit-v1/Adafruit MCP4725",
+                "/home/weeeadmin/Documenti/Peperoncino/firmware/.pio/libdeps/esp32doit-devkit-v1/Adafruit BusIO",
                 "/home/weeeadmin/.platformio/packages/framework-arduinoespressif32/libraries/SPI/src",
                 "/home/weeeadmin/.platformio/packages/framework-arduinoespressif32/libraries/Wire/src",
                 "/home/weeeadmin/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32/include/newlib/platform_include",
@@ -246,11 +246,11 @@
             "browse": {
                 "limitSymbolsToIncludedHeaders": true,
                 "path": [
-                    "/home/weeeadmin/Documenti/Peperone/board/include",
-                    "/home/weeeadmin/Documenti/Peperone/board/src",
+                    "/home/weeeadmin/Documenti/Peperoncino/firmware/include",
+                    "/home/weeeadmin/Documenti/Peperoncino/firmware/src",
                     "/home/weeeadmin/.platformio/packages/framework-arduinoespressif32/libraries/WiFi/src",
-                    "/home/weeeadmin/Documenti/Peperone/board/.pio/libdeps/esp32doit-devkit-v1/Adafruit MCP4725",
-                    "/home/weeeadmin/Documenti/Peperone/board/.pio/libdeps/esp32doit-devkit-v1/Adafruit BusIO",
+                    "/home/weeeadmin/Documenti/Peperoncino/firmware/.pio/libdeps/esp32doit-devkit-v1/Adafruit MCP4725",
+                    "/home/weeeadmin/Documenti/Peperoncino/firmware/.pio/libdeps/esp32doit-devkit-v1/Adafruit BusIO",
                     "/home/weeeadmin/.platformio/packages/framework-arduinoespressif32/libraries/SPI/src",
                     "/home/weeeadmin/.platformio/packages/framework-arduinoespressif32/libraries/Wire/src",
                     "/home/weeeadmin/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32/include/newlib/platform_include",

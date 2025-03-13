@@ -56,7 +56,6 @@ void setup()
   // Serial.printf("Network: %s\n", WiFi.softAPIP().toString());
   // connect(ssid, password);
   // Serial.printf("IP: %s\n", WiFi.localIP().toString());
-  heap_caps_enable_nonos_stack_heaps();
   Serial.println("Setup Done");
 }
 
@@ -68,6 +67,11 @@ void loop()
     // Serial.printf("Line: %s\n", line);
     parse_gcode_line(gcode[line]);
     line++;
+    if (line == length) {
+      running = false;
+      line = 0;
+      send_confirmation_signal();
+    }
   }
   
 }
