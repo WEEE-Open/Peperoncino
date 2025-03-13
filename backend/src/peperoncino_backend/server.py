@@ -69,14 +69,15 @@ async def append_file(file: UploadFile = File(...)):
     with open(Path(files_path, file.filename), "wb") as f:
         f.write(file.file.read())
 
+    output_path = Path(files_path, name + ".gcode")
     # If the file is a raster image, convert it to a gcode file
     match file.content_type:
         case "text/plain":
             gcode_file = file.file.readlines()
-            with open(Path(files_path, name + ".gcode"), "w") as f:
+            with open(output_path, "w") as f:
                 f.writelines(gcode_file)
         case "image/svg+xml":
-            convert_svg_to_gcode(Path(files_path, file.filename), name + ".gcode")
+            convert_svg_to_gcode(Path(files_path, file.filename), output_path)
         case (
             "image/png"
             | "image/jpeg"
