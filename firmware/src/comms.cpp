@@ -117,6 +117,10 @@ void readOnlineGCode() {
     Serial.println("Done");
 }
 
+void send_confirmation_signal() {
+    Serial.printf("Done %d\n", length);
+}
+
 void handleBackendComms(void *parameter)
 {
     unsigned char received_cmd;

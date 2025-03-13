@@ -12,7 +12,11 @@
 #define SHORTEST_SIZE_MM 200.0
 #define MM_DAC_RATIO (MAX_DAC / SHORTEST_SIZE_MM)
 
-#define DELAY_MULTIPLIER 4
+#define STEPS_PER_MM 20
+#define INTERPOLATION_APPROX_COEFF 0.8
+
+
+#define DELAY_MULTIPLIER 10
 
 typedef void (*callback_function)(void);
 

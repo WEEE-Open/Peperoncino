@@ -1,6 +1,5 @@
 #include "plotter.h"
-
-#define INTERPOLATION_STEPS 5.
+#include "consts.h"
 
 Adafruit_MCP4725 dacX;
 Adafruit_MCP4725 dacY;
@@ -40,13 +39,16 @@ void move(double x, double y, bool fast = false)
   }
   else
   {
-    for (int i = 1; i <= INTERPOLATION_STEPS; i++)
+    unsigned int dist = abs(x - currentX) + abs(y - currentY);
+    unsigned int interpolation_steps = STEPS_PER_MM * INTERPOLATION_APPROX_COEFF * dist;
+    // Serial.println(interpolation_steps);
+    for (float i = 1; i <= interpolation_steps; i++)
     {
-      currentX += (i / INTERPOLATION_STEPS) * (x - currentX);
-      currentY += (i / INTERPOLATION_STEPS) * (y - currentY);
+      currentX += (i / interpolation_steps) * (x - currentX);
+      currentY += (i / interpolation_steps) * (y - currentY);
       sendX(mm_to_DAC(currentX));
       sendY(mm_to_DAC(currentY));
-      delay(t / INTERPOLATION_STEPS);
+      delay(t / interpolation_steps);
     }
   }
 }

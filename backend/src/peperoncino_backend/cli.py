@@ -1,4 +1,5 @@
 import os
+import sys
 
 import typer
 from dotenv import load_dotenv
@@ -9,6 +10,7 @@ load_dotenv()
 
 
 def main():
+    sys.argv = sys.argv[1:]
     app = typer.Typer()
 
     def execute_command(command: str, port: str, file_path: str = None):

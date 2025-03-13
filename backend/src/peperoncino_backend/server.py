@@ -1,4 +1,6 @@
 import os
+import time
+import threading
 from pathlib import Path
 
 import uvicorn
@@ -79,6 +81,11 @@ async def set_port(port: str):
     return JSONResponse(content={"message": f"Port set to {port}"}, status_code=200)
 
 def main():
+    def poll_confirmation():
+        while True:
+            plotter.check_confirmation()
+            time.sleep(0.5)
+
     uvicorn.run(
         "peperoncino_backend.server:app",
         host="0.0.0.0",
