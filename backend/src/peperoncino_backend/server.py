@@ -1,6 +1,5 @@
+import logging
 import os
-import time
-import threading
 from pathlib import Path
 
 import uvicorn
@@ -10,6 +9,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from .gcode import convert_svg_to_gcode
 
 from . import lib
+
+log = logging.getLogger(__name__)
 
 app = FastAPI()
 
@@ -60,34 +61,51 @@ async def get_jobs():
 
 @app.post("/queue")
 async def append_file(file: UploadFile = File(...)):
+    name = "".join(file.filename.split(".")[:-1])
+    # Append the path to the list jobs
+    jobs.append(name)
 
-    #Create a temporary file to store the uploaded file
+    # Create a temporary file to store the uploaded file
     with open(Path(files_path, file.filename), "wb") as f:
         f.write(file.file.read())
+
     # If the file is a raster image, convert it to a gcode file
-    gcode_file = []
-    name = "".join(file.filename.split(".")[:-1])
     match file.content_type:
         case "text/plain":
             gcode_file = file.file.readlines()
+            with open(Path(files_path, name + ".gcode"), "w") as f:
+                f.writelines(gcode_file)
         case "image/svg+xml":
-            gcode_file = convert_svg_to_gcode(Path(files_path, file.filename), name + ".gcode")
-        case "image/png" | "image/jpeg" | "image/jpg" | "image/bmp" | "image/gif" | "image/webp" | "application/pdf":
-            pass
+            convert_svg_to_gcode(Path(files_path, file.filename), name + ".gcode")
+        case (
+            "image/png"
+            | "image/jpeg"
+            | "image/jpg"
+            | "image/bmp"
+            | "image/gif"
+            | "image/webp"
+            | "application/pdf"
+        ):
+            log.warning("Raster image to gcode conversion is yet to be implemented.")
+            return JSONResponse(
+                content={
+                    "filename": file.filename,
+                    "message": "Raster image to gcode conversion is yet to be implemented.",
+                },
+                status_code=405,
+            )
         case _:
             return JSONResponse(
-                content={"filename": file.filename, "message": "Unsupported file format"}, 
-                status_code=400
+                content={
+                    "filename": file.filename,
+                    "message": "Unsupported file format",
+                },
+                status_code=405,
             )
 
-    # Save the file in the "files" directory
-    with open(Path(files_path, name + ".gcode"), "w") as f:
-        f.writelines(gcode_file)
     # Delete the temporary file
     if Path(files_path, file.filename).exists():
         Path(files_path, file.filename).unlink()
-    # Append the path to the list jobs
-    jobs.append(name)
 
     return JSONResponse(
         content={"filename": file.filename, "message": "File received"}, status_code=200
@@ -151,6 +169,7 @@ async def set_speed(request: Request):
 
 @app.get("/state")
 async def get_state():
+    plotter.check_confirmation()
     uploaded, running = plotter.state
     data = {
         "uploaded": uploaded.stem if uploaded else None,
@@ -160,11 +179,6 @@ async def get_state():
 
 
 def main():
-    def poll_confirmation():
-        while True:
-            plotter.check_confirmation()
-            time.sleep(0.5)
-
     uvicorn.run(
         "peperoncino_backend.server:app",
         host="0.0.0.0",

@@ -1,63 +1,192 @@
-from vpype_cli.cli import cli
-import sys
-from contextlib import redirect_stdout, redirect_stderr
-import io
-import os
-from pathlib import Path
+import collections
+import typing
 
-def convert_svg_to_gcode(input_svg, output_gcode, profile="gcodemm"):
+import vpype as vp
+
+
+def convert_svg_to_gcode(input_path, output_path, quantization=0.1):
+    svg: vp.Document = vp.read_multilayer_svg(input_path, quantization=quantization)
+    with open(output_path, "w") as fs:
+        gwrite(svg, output=fs)
+
+
+"""
+The following functions are taken from the package vpype-gcode at https://github.com/plottertools/vpype-gcode, modified to work without the CLI, and only for what is needed in the context of this project.
+The original license is included:
+```
+MIT License
+
+Copyright (c) 2020 David Olsen
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS ORh
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
+"""
+
+
+def invert_axis(
+    document: vp.Document,
+    invert_x: bool,
+    invert_y: bool,
+) -> vp.Document:
+    """Inverts none, one or both axis of the document.
+    This applies a relative scale operation with factors of 1 or -1
+    on the two axis to all layers. The inversion happens relative to
+    the center of the bounds.
     """
-    Converte un file SVG in G-code utilizzando l'API cli di vpype.
-    
-    Args:
-        input_svg (str): Percorso del file SVG di input
-        output_gcode (str): Percorso del file G-code di output
-        profile (str): Profilo gcode da utilizzare (es. "marlin", "grbl")
-    
-    Returns:
-        str: Contenuto del file G-code generato, o None in caso di errore
-    """
-    # Costruisci il comando come lista di argomenti
-    cmd_args = ["vpype", "read", str(Path(input_svg)), "gwrite", "-p", profile, output_gcode]
-    
-    # Reindirizza stdout e stderr per catturare l'output
-    stdout_capture = io.StringIO()
-    stderr_capture = io.StringIO()
-    
-    # Salva gli argomenti originali e imposta quelli nuovi
-    original_argv = sys.argv.copy()
-    sys.argv = cmd_args
-    
-    gcode_content = None
+
+    bounds = document.bounds()
+
+    if not bounds:
+        return document
+
+    origin = (
+        0.5 * (bounds[0] + bounds[2]),
+        0.5 * (bounds[1] + bounds[3]),
+    )
+
+    document.translate(-origin[0], -origin[1])
+    document.scale(-1 if invert_x else 1, -1 if invert_y else 1)
+    document.translate(origin[0], origin[1])
+
+    return document
+
+
+def write_template(
+    template: str | None, document, current_layer, output, **context_vars: typing.Any
+):
+    """Expend a user-provided template using `format()`-style substitution."""
+    if template is None:
+        return
+    dicts = [context_vars, document.metadata]
+    if current_layer is not None:
+        dicts.append(current_layer.metadata)
+
     try:
-        # Esegui il comando vpype
-        with redirect_stdout(stdout_capture), redirect_stderr(stderr_capture):
-            cli(standalone_mode=False)
-        
-        # Verifica se il file di output è stato creato
-        if os.path.exists(output_gcode):
-            # Leggi il contenuto del file G-code
-            with open(output_gcode, 'r') as f:
-                gcode_content = f.readlines()
-        else:
-            print(f"Errore: File di output '{output_gcode}' non creato")
-    
-    except Exception as e:
-        print(f"Errore durante la conversione: {str(e)}")
-        stderr_output = stderr_capture.getvalue()
-        if "inverted across the y-axis" in stderr_output and os.path.exists(output_gcode):
-            print("Avviso: Il profilo G-code ha l'asse Y invertito (non è un errore critico)")
-            # Leggi il contenuto del file G-code anche se c'è un avviso sull'asse Y
-            with open(output_gcode, 'r') as f:
-                gcode_content = f.readlines()
-        else:
-            print(f"Errore: {stderr_output}")
-    
-    finally:
-        # Ripristina gli argomenti originali
-        sys.argv = original_argv
-    # Delete the temporary file
-    if Path(output_gcode).exists():
-        print(f"Deleting {output_gcode}")
-        Path(output_gcode).unlink()
-    return gcode_content
+        output.write(template.format_map(collections.ChainMap(*dicts)))
+    except KeyError as exc:
+        raise KeyError(
+            f"key {exc.args[0]!r} not found in context variables or properties"
+        )
+
+
+def gwrite(
+    document,
+    output: typing.TextIO,
+    *,
+    offset_x=0.0,
+    offset_y=0.0,
+    scale_x=1.0,
+    scale_y=1.0,
+    invert_x=False,
+    invert_y=False,
+    zero_align=True,
+    linesort=True,
+):
+    document_start = "G21\nG17\nG90\n"
+    document_end = "M2\n"
+    segment_first = "G00 X{x:.4f} Y{y:.4f}\n"
+    segment = "G01 X{x:.4f} Y{y:.4f}\n"
+    unit = "mm"
+
+    unit_scale = vp.convert_length(unit)
+
+    if zero_align:
+        min_x, min_y, _, _ = document.bounds()
+        document.translate(-min_x, -min_y)
+    document.scale(scale_x / unit_scale, scale_y / unit_scale)
+    document.translate(offset_x, offset_y)
+
+    if invert_x or invert_y:
+        document = invert_axis(document, invert_x, invert_y)
+
+    current_layer: vp.LineCollection | None = None
+
+    filename = output.name
+    write_template(
+        document_start,
+        document=document,
+        current_layer=current_layer,
+        output=output,
+        filename=filename,
+    )
+
+    last_x = 0
+    last_y = 0
+    xx = 0
+    yy = 0
+
+    for layer_index, (layer_id, layer) in enumerate(document.layers.items()):
+        current_layer = layer  # used by write_template()
+
+        for lines_index, line in enumerate(layer):
+            for segment_index, seg in enumerate(line):
+                x = seg.real
+                y = seg.imag
+                dx = x - last_x
+                dy = y - last_y
+                idx = int(round(x - xx))
+                idy = int(round(y - yy))
+                xx += idx
+                yy += idy
+                if segment_index == 0:
+                    seg_write = segment_first
+                else:
+                    seg_write = segment
+
+                write_template(
+                    seg_write,
+                    document=document,
+                    current_layer=current_layer,
+                    output=output,
+                    x=x,
+                    y=y,
+                    dx=dx,
+                    dy=dy,
+                    _x=-x,
+                    _y=-y,
+                    _dx=-dx,
+                    _dy=-dy,
+                    ix=xx,
+                    iy=yy,
+                    idx=idx,
+                    idy=idy,
+                    index=segment_index,
+                    index1=segment_index + 1,
+                    segment_index=segment_index,
+                    segment_index1=segment_index + 1,
+                    lines_index=lines_index,
+                    lines_index1=lines_index + 1,
+                    layer_index=layer_index,
+                    layer_index1=layer_index + 1,
+                    layer_id=layer_id,
+                    filename=filename,
+                )
+
+                last_x = x
+                last_y = y
+
+        current_layer = None
+
+    write_template(
+        document_end,
+        document=document,
+        current_layer=current_layer,
+        output=output,
+        filename=filename,
+    )
