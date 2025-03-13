@@ -16,8 +16,6 @@
 #define INTERPOLATION_APPROX_COEFF 0.8
 
 
-#define DELAY_MULTIPLIER 10
-
 typedef void (*callback_function)(void);
 
 #endif

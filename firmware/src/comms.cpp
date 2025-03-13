@@ -14,6 +14,8 @@ extern unsigned int line;
 
 extern const std::unordered_map<unsigned char, callback_function> comms_table;
 
+double delay_multiplier = 100/8.;
+
 void start()
 {
     Serial.println("Start");
@@ -65,11 +67,11 @@ void readGCodeFile()
         length |= (Serial.read() << (8 * i));
     }
 
-    
+
     gcode = new char *[length];
     line = 0;
 
-    
+
     for (unsigned int i = 0; i < length; i++)
     {
         received_size = Serial.readBytesUntil('\n', buffer, 63);
@@ -100,10 +102,10 @@ void readOnlineGCode() {
         length |= (Serial.read() << (8 * i));
     }
 
-    
+
     Serial.printf("Received length %u\n", length);
 
-    
+
     for (unsigned int i = 0; i < length; i++)
     {
         // Serial.println(i);
@@ -121,6 +123,24 @@ void send_confirmation_signal() {
     Serial.printf("Done %d\n", length);
 }
 
+void readDelayMultiplier() {
+    bool tmp = running;
+    running = false;
+    Serial.println("Delay");
+    double received_delay = 0x0;
+
+    for (int i = 0; i < 8; i++)
+    {
+        while (Serial.available() <= 0) {}
+        received_delay |= (Serial.read() << (8 * i));
+    }
+
+    Serial.printf("Received delay %f\n", received_delay);
+
+    delay_multiplier = received_delay;
+    running = tmp;
+}
+
 void handleBackendComms(void *parameter)
 {
     unsigned char received_cmd;
@@ -128,7 +148,7 @@ void handleBackendComms(void *parameter)
     while (true)
     {
         // server_listen();
-        
+
         // Serial.print("Z");
         if (Serial.available() > 0)
         {

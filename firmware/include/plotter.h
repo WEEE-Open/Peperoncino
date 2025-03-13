@@ -11,6 +11,8 @@ extern Adafruit_MCP4725 dacY;
 
 extern volatile bool penDown;
 
+extern double delay_multiplier;
+
 #define setPenDown()              \
   {                               \
     if (!penDown)                 \
@@ -45,7 +47,7 @@ extern volatile bool penDown;
   double _dx = abs((double)(x) - currentX); \
   double _dy = abs((double)(y) - currentY); \
   double _d = sqrt(_dx * _dx + _dy * _dy);  \
-  _d *DELAY_MULTIPLIER;                     \
+  _d * delay_multiplier;                     \
 })
 
 #define plotter_setup()          \

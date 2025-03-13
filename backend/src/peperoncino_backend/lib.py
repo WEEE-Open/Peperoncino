@@ -19,9 +19,6 @@ log = logging.getLogger(__name__)
 
 class Plotter:
     def __init__(self, port: str = None):
-        self._running = False
-        self._uploaded = None
-        self._speed = 100
         if port is None:
             ports = get_available_ports()
             ports = list(filter(lambda x: "CP2102" in str(x), ports))
@@ -53,6 +50,9 @@ class Plotter:
             if port:
                 log.info(f"No port provided. Defaulting to {port}.")
         self.port = port
+        self._running = False
+        self._uploaded = None
+        self.speed = 100
 
     @property
     def state(self):
@@ -81,7 +81,7 @@ class Plotter:
         if value != self._speed:
             self._speed = value
             # Delay is 0 for speed 200, ~10 for speed 100 and 50 for speed 0
-            delay = (value - 200) ** 2 / 800
+            delay = (200 - value) ** 2 / 800
             self.safe_write(struct.pack("B", 0x05))
             self.safe_write(struct.pack("d", delay))
 

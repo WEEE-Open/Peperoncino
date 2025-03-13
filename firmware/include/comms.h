@@ -12,6 +12,7 @@ void reset();
 void readGCodeFile();
 void readOnlineGCode();
 void send_confirmation_signal();
+void readDelayMultiplier();
 
 const std::unordered_map<unsigned char, callback_function> comms_table = {
     { 0x00, start },
@@ -19,6 +20,7 @@ const std::unordered_map<unsigned char, callback_function> comms_table = {
     { 0x02, readGCodeFile },
     { 0x03, reset },
     { 0x04, readOnlineGCode }
+    { 0x05, readDelayMultiplier }
 };
 
 #endif
