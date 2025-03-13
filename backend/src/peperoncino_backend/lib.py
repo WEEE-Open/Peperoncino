@@ -109,7 +109,11 @@ class Plotter:
 
         if self.serial:
             log.debug(f"writing {data}")
-            self.serial.write(data)
+            try:
+                self.serial.write(data)
+            except serial.SerialException:
+                log.error("Serial write failed")
+                self.port = None
         else:
             log.debug(f"would write {data}")
 
@@ -146,7 +150,6 @@ class Plotter:
         itr = tqdm(list(data))
         for line in itr:
             self.safe_write(line)
-
 
 
 def get_available_ports() -> list[dict]:
