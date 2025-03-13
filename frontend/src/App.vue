@@ -105,6 +105,13 @@ export default {
     },
     beforeUpdate() {
         this.checkConnection();
+    },
+    mounted() {
+        setInterval(() => {
+            if (this.connectionOk) {
+                this.fetchState();
+            }
+        }, 2000);
     }
 
 }
