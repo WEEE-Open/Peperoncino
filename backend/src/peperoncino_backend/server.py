@@ -1,6 +1,7 @@
 import logging
 import os
 from pathlib import Path
+import re
 
 import uvicorn
 from fastapi import FastAPI, File, Request, UploadFile
@@ -25,9 +26,10 @@ app.add_middleware(
 plotter = lib.Plotter()
 
 files_path = "files/"
+default_files = "default_files/"
 Path(files_path).mkdir(parents=True, exist_ok=True)
 # initialize 'jobs' list with the files in the 'files' directory
-default_jobs = [f"{f.stem}" for f in Path(files_path).iterdir() if f.is_file()]
+default_jobs = [f"{f.stem}" for f in Path(default_files ).iterdir() if f.is_file()]
 jobs = default_jobs.copy()
 
 
@@ -56,12 +58,22 @@ async def reset():
 
 @app.get("/queue")
 async def get_jobs():
-    return JSONResponse(content={"jobs": jobs}, status_code=200)
+    return JSONResponse(content={"jobs": jobs, "default_jobs": default_jobs}, status_code=200)
 
 
 @app.post("/queue")
 async def append_file(file: UploadFile = File(...)):
-    name = "".join(file.filename.split(".")[:-1])
+
+    name_match = re.match(r"(.*?)(?:\..*)?$", file.filename)
+    name = name_match.group(1) if name_match else file.filename
+    
+    if name in jobs:
+        suffix_match = re.match(r"(.*?)__(\d+)$", name)
+        if suffix_match:
+            base_name, num = suffix_match.groups()
+            name = f"{base_name}__{int(num) + 1}"
+        else:
+            name = f"{name}__1"
     # Append the path to the list jobs
     jobs.append(name)
 
@@ -117,9 +129,10 @@ async def append_file(file: UploadFile = File(...)):
 async def delete_job(job: str):
     if job in jobs:
         jobs.remove(job)
-        if job not in default_jobs:
-            Path(files_path, job + ".gcode").unlink()
+        Path(files_path, job + ".gcode").unlink()
         return JSONResponse(content={"message": "Job deleted"}, status_code=200)
+    elif job in default_jobs:
+        return JSONResponse(content={"message": "Default job can't be deleted"}, status_code=404)
     return JSONResponse(content={"message": "Job not found"}, status_code=404)
 
 
@@ -128,6 +141,9 @@ async def send_job(job: str):
     if job in jobs:
         plotter.send(Path(files_path, job + ".gcode"))
         return JSONResponse(content={"message": "Job sent"}, status_code=200)
+    elif job in default_jobs:
+        plotter.send(Path(default_files, job + ".gcode"))
+        return JSONResponse(content={"message": "Default job sent"}, status_code=200)
     return JSONResponse(content={"message": "Job not found"}, status_code=404)
 
 
