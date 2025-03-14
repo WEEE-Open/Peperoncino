@@ -1,6 +1,7 @@
 import logging
 import os
 from pathlib import Path
+import re
 
 import uvicorn
 from fastapi import FastAPI, File, Request, UploadFile
@@ -62,7 +63,17 @@ async def get_jobs():
 
 @app.post("/queue")
 async def append_file(file: UploadFile = File(...)):
-    name = "".join(file.filename.split(".")[:-1])
+
+    name_match = re.match(r"(.*?)(?:\..*)?$", file.filename)
+    name = name_match.group(1) if name_match else file.filename
+    
+    if name in jobs:
+        suffix_match = re.match(r"(.*?)__(\d+)$", name)
+        if suffix_match:
+            base_name, num = suffix_match.groups()
+            name = f"{base_name}__{int(num) + 1}"
+        else:
+            name = f"{name}__1"
     # Append the path to the list jobs
     jobs.append(name)
 
