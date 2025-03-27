@@ -12,11 +12,15 @@ This repository includes three sub-projects:
 
 ## Setup
 
-In the `backend/` directory, run:
+In the `backend/` directory, create a virtual environment and run:
 `pip install .[all]`
 or if you want to install exclusively the cli/server dependencies
 `poetry install .[cli]`
 `poetry install .[server]`
+
+If using the web frontend, in the `frontend/` directory, run 
+`npm install`
+`npm run build`
 
 ## Usage
 
@@ -34,4 +38,12 @@ Since they're still in early development, the frontend, backend and firmware mig
 
 ### Server
 
-`peperoncino_backend server`
+in `backend/`
+```sh
+peperoncino_backend server
+```
+
+in `frontend/`
+```sh
+npm run preview
+```
