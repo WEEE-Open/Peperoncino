@@ -62,7 +62,7 @@ export default {
                     this.selectedPort = port;
                     return response.json();
                 }
-            ).then(data => { }).catch(error => {
+            ).then(() => { }).catch(error => {
                 console.error('There has been a problem with the connection:', error);
             }
             );
@@ -82,7 +82,7 @@ export default {
                     }
                     return response.json();
                 }
-            ).then(data => { }).catch(error => {
+            ).then(() => { }).catch(error => {
                 console.error('There has been a problem with the connection:', error);
             }
             );

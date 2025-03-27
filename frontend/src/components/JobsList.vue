@@ -10,7 +10,8 @@ export default {
   },
   data() {
     return {
-      queue: [],
+      jobs: [],
+      default_jobs: [],
       uploading: null as string | null,
       dragging_queue: false,
     }
@@ -19,7 +20,7 @@ export default {
     serverURL: String,
     connectionOk: Boolean,
     running: Boolean,
-    uploaded: { type: String, default: null },
+    uploaded: { type: Object as PropType<string | null>, default: null },
     fetchState: { type: Function as PropType<() => void>, required: true },
   },
   methods: {
@@ -34,7 +35,8 @@ export default {
             return response.json();
           })
           .then(data => {
-            this.queue = data['jobs'];
+            this.jobs = data['jobs'];
+            this.default_jobs = data['default_jobs'];
           })
           .catch(error => {
             console.error('There has been a problem with the connection:', error);
@@ -44,7 +46,7 @@ export default {
     triggerFileInput() {
       (this.$refs.fileInput as HTMLInputElement).click();
     },
-    handleFileUpload(event: Event) {
+    handleFileUpload() {
       const file = (this.$refs.fileInput as HTMLInputElement).files![0];
       if (file) {
         (this.$refs.fileInput as HTMLInputElement).files?.item(0);
@@ -61,7 +63,7 @@ export default {
             }
             return response.json();
           })
-          .then(data => {
+          .then(() => {
             this.fetchQueue();
           })
           .catch(error => {
@@ -74,12 +76,10 @@ export default {
       this.dragging_queue = false;
       if (files) {
         (this.$refs.fileInput as HTMLInputElement).files = files;
-        for (const _ of files) {
-          this.handleFileUpload(event);
-        }
+        Array.from(files).forEach(() => this.handleFileUpload());
       }
     },
-    startJob(job: string) {
+    startJob() {
       fetch(`${this.serverURL}/start`, {
         method: 'POST',
       })
@@ -89,14 +89,14 @@ export default {
           }
           return response.json();
         })
-        .then(data => {
+        .then(() => {
           this.fetchState();
         })
         .catch(error => {
           console.error('There has been a problem with the job start:', error);
         });
     },
-    pauseJob(job: string) {
+    pauseJob() {
       fetch(`${this.serverURL}/pause`, {
         method: 'POST',
       })
@@ -106,7 +106,7 @@ export default {
           }
           return response.json();
         })
-        .then(data => {
+        .then(() => {
           this.fetchState();
         })
         .catch(error => {
@@ -123,7 +123,7 @@ export default {
           }
           return response.json();
         })
-        .then(data => {
+        .then(() => {
           this.fetchQueue();
           this.fetchState();
         })
@@ -131,7 +131,7 @@ export default {
           console.error('There has been a problem with the job removal:', error);
         });
     },
-    resetJob(job: string) {
+    resetJob() {
       fetch(`${this.serverURL}/reset`, {
         method: 'POST',
       })
@@ -141,7 +141,7 @@ export default {
           }
           return response.json();
         })
-        .then(data => {
+        .then(() => {
           this.fetchQueue();
           this.fetchState();
         })
@@ -160,7 +160,7 @@ export default {
           }
           return response.json();
         })
-        .then(data => {
+        .then(() => {
           this.uploading = null;
           this.fetchState();
         })
@@ -170,14 +170,15 @@ export default {
     },
   },
   mounted() {
-    this.fetchQueue();
   },
   watch: {
     connectionOk() {
       if (this.connectionOk)
         this.fetchQueue();
-      else
-        this.queue = [];
+      else {
+        this.jobs = [];
+        this.default_jobs = [];
+      }
     },
   },
 }
@@ -187,12 +188,15 @@ export default {
   <div class="w-full h-full flex flex-col justify-start items-center gap-4 pb-16">
     <h2 v-if="!connectionOk" class="items-center text-center">Not connected to server</h2>
     <div v-else class="flex flex-col w-full items-center justify-center gap-4">
-      <h2 v-if="queue.length === 0" class="items-center text-center">Queue is empty</h2>
+      <h2 v-if="(jobs.length + default_jobs.length) === 0" class="items-center text-center">Queue is empty</h2>
       <div v-else class="flex flex-col w-full items-center justify-center gap-4">
         <div class="flex flex-col w-full md:w-3/4 lg:w-1/2 justify-center gap-2">
-          <JobCard v-for="job in queue" :key="job" :job="job" :uploaded="uploaded === job"
+          <JobCard v-for="job in default_jobs" :key="job" :job="job" :uploaded="uploaded === job"
             :running="running && (uploaded === job)" :start="startJob" :pause="pauseJob" :remove="removeJob"
-            :reset="resetJob" :upload="uploadJob" :uploading="uploading === job" />
+            :reset="resetJob" :upload="uploadJob" :uploading="uploading === job" :not_default="false"/>
+          <JobCard v-for="job in jobs" :key="job" :job="job" :uploaded="uploaded === job"
+            :running="running && (uploaded === job)" :start="startJob" :pause="pauseJob" :remove="removeJob"
+            :reset="resetJob" :upload="uploadJob" :uploading="uploading === job" :not_default="true"/>
         </div>
       </div>
       <form @submit.prevent="handleFileUpload" class="w-full h-40 md:h-60 flex flex-col items-center">

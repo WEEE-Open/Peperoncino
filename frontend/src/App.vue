@@ -1,6 +1,6 @@
 <script lang="ts">
 import SettingsPanel from './components/SettingsPanel.vue'
-import Queue from './components/Queue.vue'
+import Queue from './components/JobsList.vue'
 import { Unplug } from 'lucide-vue-next';
 
 export default {
@@ -36,7 +36,7 @@ export default {
                     }
                     return response.json();
                 })
-                .then(data => {
+                .then(() => {
                     this.connectionOk = true;
                 })
                 .catch(error => {
@@ -54,7 +54,7 @@ export default {
                     return response.json();
                 })
                 .then(data => {
-                    this.serialPorts = data.map((obj: any) => obj.device);
+                    this.serialPorts = data.map((obj: { device: string }) => obj.device);
                 })
                 .catch(error => {
                     console.error('There has been a problem with the connection:', error);
@@ -82,13 +82,13 @@ export default {
         }
     },
     watch: {
-        serverURL(newURL: string, oldURL: string) {
+        serverURL(newURL: string) {
             if (newURL.endsWith('/')) {
                 this.serverURL = newURL.slice(0, -1);
             }
             this.checkConnection();
         },
-        connectionOk(newStatus: boolean, oldStatus: boolean) {
+        connectionOk(newStatus: boolean) {
             if (newStatus) {
                 this.fetchSerialPorts();
                 this.fetchState();
