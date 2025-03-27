@@ -29,8 +29,10 @@ files_path = "files/"
 default_files = "default_files/"
 Path(files_path).mkdir(parents=True, exist_ok=True)
 # initialize 'jobs' list with the files in the 'files' directory
-default_jobs = [f"{f.stem}" for f in Path(default_files ).iterdir() if f.is_file()]
-jobs = default_jobs.copy()
+default_jobs = [f"{f.stem}" for f in Path(default_files).iterdir() if f.is_file()]
+jobs = [f"{f.stem}" for f in Path(files_path).iterdir() if f.is_file()]
+log.info(f"Default jobs: {default_jobs}")
+log.info(f"Jobs: {jobs}")
 
 
 @app.get("/")
@@ -58,15 +60,17 @@ async def reset():
 
 @app.get("/queue")
 async def get_jobs():
-    return JSONResponse(content={"jobs": jobs, "default_jobs": default_jobs}, status_code=200)
+    return JSONResponse(
+        content={"jobs": jobs, "default_jobs": default_jobs}, status_code=200
+    )
 
 
 @app.post("/queue")
 async def append_file(file: UploadFile = File(...)):
-
     name_match = re.match(r"(.*?)(?:\..*)?$", file.filename)
     name = name_match.group(1) if name_match else file.filename
-    
+    res = None
+
     if name in jobs:
         suffix_match = re.match(r"(.*?)__(\d+)$", name)
         if suffix_match:
@@ -84,10 +88,8 @@ async def append_file(file: UploadFile = File(...)):
     output_path = Path(files_path, name + ".gcode")
     # If the file is a raster image, convert it to a gcode file
     match file.content_type:
-        case "text/plain":
-            gcode_file = file.file.readlines()
-            with open(output_path, "w") as f:
-                f.writelines(gcode_file)
+        case "text/plain" | "text/x.gcode":
+            Path(files_path, file.filename).replace(output_path)
         case "image/svg+xml":
             convert_svg_to_gcode(Path(files_path, file.filename), output_path)
         case (
@@ -100,7 +102,8 @@ async def append_file(file: UploadFile = File(...)):
             | "application/pdf"
         ):
             log.warning("Raster image to gcode conversion is yet to be implemented.")
-            return JSONResponse(
+            jobs.remove(name)
+            res = JSONResponse(
                 content={
                     "filename": file.filename,
                     "message": "Raster image to gcode conversion is yet to be implemented.",
@@ -108,7 +111,8 @@ async def append_file(file: UploadFile = File(...)):
                 status_code=405,
             )
         case _:
-            return JSONResponse(
+            jobs.remove(name)
+            res = JSONResponse(
                 content={
                     "filename": file.filename,
                     "message": "Unsupported file format",
@@ -120,7 +124,7 @@ async def append_file(file: UploadFile = File(...)):
     if Path(files_path, file.filename).exists():
         Path(files_path, file.filename).unlink()
 
-    return JSONResponse(
+    return res or JSONResponse(
         content={"filename": file.filename, "message": "File received"}, status_code=200
     )
 
@@ -132,7 +136,9 @@ async def delete_job(job: str):
         Path(files_path, job + ".gcode").unlink()
         return JSONResponse(content={"message": "Job deleted"}, status_code=200)
     elif job in default_jobs:
-        return JSONResponse(content={"message": "Default job can't be deleted"}, status_code=404)
+        return JSONResponse(
+            content={"message": "Default job can't be deleted"}, status_code=404
+        )
     return JSONResponse(content={"message": "Job not found"}, status_code=404)
 
 

@@ -78,7 +78,7 @@ class Plotter:
             log.error("Speed must be between 0 and 200")
             return
 
-        if value != self._speed:
+        if not hasattr(self, '_speed') or value != self._speed:
             self._speed = value
             # Delay is 0 for speed 200, ~10 for speed 100 and 50 for speed 0
             delay = (200 - value) ** 2 / 800
