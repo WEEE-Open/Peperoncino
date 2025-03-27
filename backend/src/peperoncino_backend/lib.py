@@ -4,7 +4,7 @@ import struct
 import serial
 import serial.tools.list_ports
 
-from .consts import MAX_FILE_SIZE
+from .consts import MAX_FILE_LINES
 
 try:
     from tqdm import tqdm
@@ -78,7 +78,7 @@ class Plotter:
             log.error("Speed must be between 0 and 200")
             return
 
-        if not hasattr(self, '_speed') or value != self._speed:
+        if not hasattr(self, "_speed") or value != self._speed:
             self._speed = value
             # Delay is 0 for speed 200, ~10 for speed 100 and 50 for speed 0
             delay = (200 - value) ** 2 / 800
@@ -139,7 +139,7 @@ class Plotter:
             log.error(f"File not found: {file_path}")
             return
 
-        if len(data) <= MAX_FILE_SIZE:
+        if len(data) <= MAX_FILE_LINES:
             self.safe_write(struct.pack("B", 0x02))
         else:
             log.info("FILE TOO BIG: ONLINE MODE ON")
@@ -155,11 +155,12 @@ class Plotter:
         if self.serial:
             line = self.serial.readline()
             if line.startswith(b"Done"):
-                return int(line.strip().split(b' ')[-1])
+                return int(line.strip().split(b" ")[-1])
 
     def check_confirmation(self):
         if self._read_confirmation():
             self._running = False
+
 
 def get_available_ports() -> list[dict]:
     def jsonserialize(device):

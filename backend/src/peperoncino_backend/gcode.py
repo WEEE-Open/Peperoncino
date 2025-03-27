@@ -3,11 +3,28 @@ import typing
 
 import vpype as vp
 
+from peperoncino_backend.consts import MAX_FILE_LINES
 
-def convert_svg_to_gcode(input_path, output_path, quantization=0.1):
+
+def convert_svg_to_gcode(input_path, output_path, quantization=0.15):
     svg: vp.Document = vp.read_multilayer_svg(input_path, quantization=quantization)
+    while svg.segment_count() > MAX_FILE_LINES:  # ~1 line per segment
+        quantization += 0.05
+        svg = vp.read_multilayer_svg(input_path, quantization=quantization)
+
+    # svg.fit_page_size_to_content()
+    # Scale it to fit 400x250mm preserving the aspect ratio
     with open(output_path, "w") as fs:
-        gwrite(svg, output=fs)
+        gwrite(
+            svg,
+            output=fs,
+            zero_align=True,
+            linesort=True,
+            invert_x=True,
+            offset_x=15,
+            offset_y=20,
+            # fit_page=True,
+        )
 
 
 """
@@ -97,6 +114,7 @@ def gwrite(
     invert_y=False,
     zero_align=True,
     linesort=True,
+    fit_page=False,
 ):
     document_start = "G21\nG17\nG90\n"
     document_end = "M2\n"
@@ -109,11 +127,23 @@ def gwrite(
     if zero_align:
         min_x, min_y, _, _ = document.bounds()
         document.translate(-min_x, -min_y)
+
     document.scale(scale_x / unit_scale, scale_y / unit_scale)
-    document.translate(offset_x, offset_y)
 
     if invert_x or invert_y:
         document = invert_axis(document, invert_x, invert_y)
+
+    document.translate(offset_x, offset_y)
+
+    if fit_page:
+        _, _, max_x, max_y = document.bounds()
+        if max_x > 270 or max_y > 200:
+            if max_x / max_y > 27 / 20:
+                scale = 270 / max_x
+            else:
+                scale = 200 / max_y
+
+            document.scale(scale, scale)
 
     current_layer: vp.LineCollection | None = None
 
