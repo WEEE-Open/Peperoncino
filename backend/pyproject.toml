@@ -3,7 +3,7 @@ name = "peperoncino-backend"
 version = "0.1.0"
 description = ""
 authors = [
-    {name = "Francesco Basile",email = "59255877+parmigggiana@users.noreply.github.com"}
+    {name = "Francesco Basile", email = "59255877+parmigggiana@users.noreply.github.com"}
 ]
 readme = "README.md"
 requires-python = ">=3.10,<3.13"
