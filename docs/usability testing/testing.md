@@ -38,11 +38,11 @@ In Italian:
 Before performing the test, make sure the equipment is working and properly setup.
 
 - [ ] The plotter is powered and set on 'Servo On'
-- [ ] The pen is positioned at the bottom-right corner
+- [ ] The pen is positioned at the top-right corner
 - [ ] Range is 10 and Gain is barely more than 1 for both X and Y
 - [ ] Sweep is external for X and Y
-- [ ] Polarity is Normal for Y, Inverted for X
-- [ ] The red and green cable go into Input X and Input Y and the blue cable into Remote 1 on the back of the plotter
+- [ ] Polarity is Inverted for X and Y
+- [ ] The green and red cable go into Input X and Input Y and the blue cable into Remote 1 on the back of the plotter
 - [ ] The arduino is connected via USB to a computer that will host the backend
 - [ ] The backend is running
 - [ ] The frontend is running
