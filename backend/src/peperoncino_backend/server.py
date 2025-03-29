@@ -7,9 +7,10 @@ import uvicorn
 from fastapi import FastAPI, File, Request, UploadFile
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
-from .gcode import convert_svg_to_gcode
+from .gcode import convert_svg_to_gcode, convert_gcode_to_jpg
 
 from . import lib
+import base64
 
 log = logging.getLogger(__name__)
 
@@ -102,14 +103,14 @@ async def append_file(file: UploadFile = File(...)):
             | "application/pdf"
         ):
             log.warning("Raster image to gcode conversion is yet to be implemented.")
-            jobs.remove(name)
-            res = JSONResponse(
-                content={
-                    "filename": file.filename,
-                    "message": "Raster image to gcode conversion is yet to be implemented.",
-                },
-                status_code=405,
-            )
+            # jobs.remove(name)
+            # res = JSONResponse(
+            #     content={
+            #         "filename": file.filename,
+            #         "message": "Raster image to gcode conversion is yet to be implemented.",
+            #     },
+            #     status_code=405,
+            # )
         case _:
             jobs.remove(name)
             res = JSONResponse(
@@ -151,6 +152,23 @@ async def send_job(job: str):
         plotter.send(Path(default_files, job + ".gcode"))
         return JSONResponse(content={"message": "Default job sent"}, status_code=200)
     return JSONResponse(content={"message": "Job not found"}, status_code=404)
+
+@app.get("/queue/{job}/preview")
+async def preview_job(job: str):
+    if job in jobs:
+        preview_path = Path(files_path, job + ".jpg")
+    elif job in default_jobs:
+        preview_path = Path(default_files, job + ".jpg")
+    else:
+        return JSONResponse(content={"message": "Job not found"}, status_code=404)
+
+    if not preview_path.exists():
+        convert_gcode_to_jpg(Path(files_path, job + ".gcode"), preview_path)
+
+    return JSONResponse(
+        content={"preview": base64.b64encode(preview_path.read_bytes()).decode("utf-8")},
+        status_code=200,
+    )
 
 
 @app.get("/ports")

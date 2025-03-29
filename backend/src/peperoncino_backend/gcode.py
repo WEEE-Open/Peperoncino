@@ -26,6 +26,12 @@ def convert_svg_to_gcode(input_path, output_path, quantization=0.15):
             # fit_page=True,
         )
 
+def convert_gcode_to_jpg(input_path, output_path):
+    """Convert a gcode file to an svg file."""
+    # copy placeholder.jpg to output_path
+    with open(output_path, "wb") as fs:
+        with open(input_path.parent / "placeholder.jpg", "rb") as f:
+            fs.write(f.read())
 
 """
 The following functions are taken from the package vpype-gcode at https://github.com/plottertools/vpype-gcode, modified to work without the CLI, and only for what is needed in the context of this project.
