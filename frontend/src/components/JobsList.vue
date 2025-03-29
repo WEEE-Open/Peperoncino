@@ -57,9 +57,9 @@ export default {
       (this.$refs.fileInput as HTMLInputElement).click();
     },
     handleFileUpload(final_if_raster: boolean = false) {
-    // if sending a raster image, show the panel
-    // with parameters and a preview
-    // If not raster, it's always final
+      // if sending a raster image, show the panel
+      // with parameters and a preview
+      // If not raster, it's always final
       const file = (this.$refs.fileInput as HTMLInputElement).files![0];
       if (file) {
         (this.$refs.fileInput as HTMLInputElement).files?.item(0);
@@ -259,16 +259,18 @@ export default {
     </div>
     <div v-show="showRasterPanel" class="modal" @click="() => { showRasterPanel = false }">
       <div class="modal-content" @click.stop>
-        <h3>Uploading a raster image</h3>
+        <h3 class="font-medium">Uploading a raster image</h3>
         <div>
-          <div class="flex flex-col gap-4" @change="() => { handleFileUpload(false) }">
+          <div class="inputGroup" @change="() => { handleFileUpload(false) }">
             <label>
-              Filter Speckle:
-              <input type="range" v-model="filter_speckle" min="0" max="128" class="slider" />
-              <span>{{ filter_speckle }}</span>
+              <span>Filter Speckle</span>
+              <div class="slider-container">
+                <input type="range" v-model="filter_speckle" min="0" max="128" class="slider" />
+                <span>{{ filter_speckle }}</span>
+              </div>
             </label>
             <label>
-              Curve Fitting:
+              <span>Curve Fitting</span>
               <select v-model="curve_fitting" class="input-field">
                 <option value="polygon">Polygon</option>
                 <option value="spline">Spline</option>
@@ -277,19 +279,25 @@ export default {
             </label>
             <div v-if="curve_fitting === 'spline'" class="flex flex-col gap-4">
               <label>
-                Corner Threshold:
-                <input type="range" v-model="corner_threshold" min="0" max="360" class="slider" />
-                <span>{{ corner_threshold }}</span>
+                <span>Corner Threshold</span>
+                <div class="slider-container">
+                  <input type="range" v-model="corner_threshold" min="0" max="360" class="slider" />
+                  <span>{{ corner_threshold }}</span>
+                </div>
               </label>
               <label>
-                Segment Length:
-                <input type="range" v-model="segment_length" min="0" max="100" class="slider" />
-                <span>{{ segment_length }}</span>
+                <span>Segment Length</span>
+                <div class="slider-container">
+                  <input type="range" v-model="segment_length" min="0" max="100" class="slider" />
+                  <span>{{ segment_length }}</span>
+                </div>
               </label>
               <label>
-                Splice Threshold:
-                <input type="range" v-model="splice_threshold" min="0" max="100" class="slider" />
-                <span>{{ splice_threshold }}</span>
+                <span>Splice Threshold</span>
+                <div class="slider-container">
+                  <input type="range" v-model="splice_threshold" min="0" max="100" class="slider" />
+                  <span>{{ splice_threshold }}</span>
+                </div>
               </label>
             </div>
           </div>
@@ -298,7 +306,7 @@ export default {
           <img v-if="($refs.fileInput as HTMLInputElement)?.files?.[0]"
             :src="window.URL.createObjectURL(($refs.fileInput as HTMLInputElement).files[0])" alt="Preview"
             class="w-1/3 h-auto max-h-56 object-contain" />
-          <ArrowRight size="24" />
+          <ArrowRight :size="24" />
           <img v-if="previewImage" :src="previewImage" alt="Preview" class="w-1/3 h-auto max-h-56 object-contain" />
         </div>
         <div class="modal-actions">
@@ -373,6 +381,34 @@ export default {
   display: flex;
   justify-content: center;
   align-items: center;
+  margin-top: 20px;
   gap: 10px;
+}
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0 40px;
+}
+
+.inputGroup label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.slider-container {
+  display: flex;
+  align-items: center;
+  gap: 1em;
+}
+
+/* .slider-container input[type="range"] {
+            margin-right: 50px;
+          } */
+
+.slider-container span {
+  width: 2em;
+  text-align: right;
 }
 </style>
