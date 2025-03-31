@@ -84,7 +84,6 @@ async def append_file(
     segment_length = int(form.get("segment_length", 4.0))
     splice_threshold = int(form.get("splice_threshold", 45))
     tmp = bool(form.get("tmp", "False"))
-    print(filter_speckle, curve_fitting, corner_threshold, segment_length, splice_threshold)
     if name in jobs:
         suffix_match = re.match(r"(.*?)__(\d+)$", name)
         if suffix_match:
