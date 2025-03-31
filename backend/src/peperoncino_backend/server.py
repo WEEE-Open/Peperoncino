@@ -8,7 +8,7 @@ import uvicorn
 from fastapi import FastAPI, File, Request, UploadFile
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
-from .gcode import convert_svg_to_gcode, convert_gcode_to_jpg
+from .gcode import convert_svg_to_gcode, convert_gcode_to_image
 
 from . import lib
 import base64
@@ -28,11 +28,18 @@ app.add_middleware(
 plotter = lib.Plotter()
 
 files_path = "files/"
-default_files = "default_files/"
+default_files_path = "default_files/"
+previews_path = "previews/"
 Path(files_path).mkdir(parents=True, exist_ok=True)
+Path(default_files_path).mkdir(parents=True, exist_ok=True)
+Path(previews_path).mkdir(parents=True, exist_ok=True)
+
 # initialize 'jobs' list with the files in the 'files' directory
-default_jobs = [f"{f.stem}" for f in Path(default_files).iterdir() if f.is_file()]
-jobs = [f"{f.stem}" for f in Path(files_path).iterdir() if f.is_file()]
+default_jobs = [
+    f"{f.stem}" for f in Path(default_files_path).glob("*.gcode") if f.is_file()
+]
+jobs = [f"{f.stem}" for f in Path(files_path).glob("*.gcode") if f.is_file()]
+
 log.info(f"Default jobs: {default_jobs}")
 log.info(f"Jobs: {jobs}")
 
@@ -68,10 +75,7 @@ async def get_jobs():
 
 
 @app.post("/queue")
-async def append_file(
-    request: Request,
-    file: UploadFile = File(...)
-):
+async def append_file(request: Request, file: UploadFile = File(...)):
     form = await request.form()
     name_match = re.match(r"(.*?)(?:\..*)?$", file.filename)
     name = name_match.group(1) if name_match else file.filename
@@ -83,14 +87,33 @@ async def append_file(
     corner_threshold = int(form.get("corner_threshold", 60))
     segment_length = int(form.get("segment_length", 4.0))
     splice_threshold = int(form.get("splice_threshold", 45))
-    tmp = bool(form.get("tmp", "False"))
-    if name in jobs:
+    tmp = form.get("tmp")
+
+    while name in jobs:
+        if file.content_type in [
+            "image/png",
+            "image/jpeg",
+            "image/jpg",
+            "image/bmp",
+            "image/gif",
+            "image/webp",
+            "application/pdf",
+        ]:
+            return JSONResponse(
+                content={
+                    "filename": file.filename,
+                    "message": "File already exists",
+                },
+                status_code=405,
+            )
+
         suffix_match = re.match(r"(.*?)__(\d+)$", name)
         if suffix_match:
             base_name, num = suffix_match.groups()
             name = f"{base_name}__{int(num) + 1}"
         else:
             name = f"{name}__1"
+
     # Append the path to the list jobs
     if not tmp:
         jobs.append(name)
@@ -118,18 +141,23 @@ async def append_file(
             vtracer.convert_image_to_svg_py(
                 Path(files_path, file.filename).resolve().as_posix(),
                 Path(files_path, name + ".svg").resolve().as_posix(),
-                colormode='binary',        # ["color"] or "binary"
-                hierarchical='stacked',    # ["stacked"] or "cutout"
-                mode=curve_fitting,        # ["spline"] "polygon", or "none"
+                colormode="binary",  # ["color"] or "binary"
+                mode=curve_fitting,  # ["spline"] "polygon", or "none"
                 filter_speckle=filter_speckle,
                 corner_threshold=corner_threshold,
                 length_threshold=segment_length,
-                splice_threshold=splice_threshold
+                splice_threshold=splice_threshold,
             )
-            convert_svg_to_gcode(Path(files_path, name + ".svg"), output_path)
-            Path(files_path, name + ".svg").unlink()
+            try:
+                convert_svg_to_gcode(Path(files_path, name + ".svg"), output_path)
+            except TypeError:
+                pass
+            else:
+                print(Path(files_path, name + ".svg").resolve().as_posix())
+                Path(files_path, name + ".svg").unlink()
         case _:
-            jobs.remove(name)
+            if not tmp:
+                jobs.remove(name)
             res = JSONResponse(
                 content={
                     "filename": file.filename,
@@ -152,6 +180,7 @@ async def delete_job(job: str):
     if job in jobs:
         jobs.remove(job)
         Path(files_path, job + ".gcode").unlink()
+        Path(previews_path, job + ".webp").unlink()
         return JSONResponse(content={"message": "Job deleted"}, status_code=200)
     elif job in default_jobs:
         return JSONResponse(
@@ -166,24 +195,30 @@ async def send_job(job: str):
         plotter.send(Path(files_path, job + ".gcode"))
         return JSONResponse(content={"message": "Job sent"}, status_code=200)
     elif job in default_jobs:
-        plotter.send(Path(default_files, job + ".gcode"))
+        plotter.send(Path(default_files_path, job + ".gcode"))
         return JSONResponse(content={"message": "Default job sent"}, status_code=200)
     return JSONResponse(content={"message": "Job not found"}, status_code=404)
 
+
 @app.get("/queue/{job}/preview")
 async def preview_job(job: str):
-    if job in jobs:
-        preview_path = Path(files_path, job + ".jpg")
-    elif job in default_jobs:
-        preview_path = Path(default_files, job + ".jpg")
-    else:
-        return JSONResponse(content={"message": "Job not found"}, status_code=404)
-
-    if not preview_path.exists():
-        convert_gcode_to_jpg(Path(files_path, job + ".gcode"), preview_path)
+    # if job not in jobs + default_jobs:
+    #     return JSONResponse(content={"message": "Job not found"}, status_code=404)
+    preview_path = Path(previews_path, job + ".webp")
+    if not preview_path.exists() or (job not in jobs and job not in default_jobs):
+        try:
+            convert_gcode_to_image(
+                Path(files_path, job + ".gcode"), preview_path, format="webp"
+            )
+        except FileNotFoundError:
+            return JSONResponse(
+                content={"message": "Gcode file not found"}, status_code=404
+            )
 
     return JSONResponse(
-        content={"preview": base64.b64encode(preview_path.read_bytes()).decode("utf-8")},
+        content={
+            "preview": base64.b64encode(preview_path.read_bytes()).decode("utf-8")
+        },
         status_code=200,
     )
 

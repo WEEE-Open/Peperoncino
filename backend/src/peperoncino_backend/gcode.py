@@ -3,10 +3,14 @@ import typing
 
 import vpype as vp
 
+import numpy as np
 from peperoncino_backend.consts import MAX_FILE_LINES
+from PIL import Image
+
+from peperoncino_backend.gcode2img import gcode2image
 
 
-def convert_svg_to_gcode(input_path, output_path, quantization=0.15):
+def convert_svg_to_gcode(input_path, output_path, quantization=0.05):
     svg: vp.Document = vp.read_multilayer_svg(input_path, quantization=quantization)
     while svg.segment_count() > MAX_FILE_LINES:  # ~1 line per segment
         quantization += 0.05
@@ -26,12 +30,27 @@ def convert_svg_to_gcode(input_path, output_path, quantization=0.15):
             # fit_page=True,
         )
 
-def convert_gcode_to_jpg(input_path, output_path):
+
+def convert_gcode_to_image(input_path, output_path, format="webp"):
     """Convert a gcode file to an svg file."""
     # copy placeholder.jpg to output_path
-    with open(output_path, "wb") as fs:
-        with open(input_path.parent / "placeholder.jpg", "rb") as f:
-            fs.write(f.read())
+    with open(input_path, "r") as f:
+        img = gcode2image(
+            f,
+            incremental=True,
+            resolution=1 / 16,
+            maxintensity=255,
+            showG0=False,
+            showorigin=False,
+            grid=False,
+        )
+
+    img = np.fliplr(img)
+
+    pic = Image.fromarray(img, mode="LA")
+    pic = pic.convert("RGBA")  # Convert to RGBA to ensure compatibility
+    pic.save(output_path, format, quality=80, optimize=True)
+
 
 """
 The following functions are taken from the package vpype-gcode at https://github.com/plottertools/vpype-gcode, modified to work without the CLI, and only for what is needed in the context of this project.
