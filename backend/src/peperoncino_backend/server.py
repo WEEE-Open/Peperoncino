@@ -83,6 +83,7 @@ async def append_file(
     corner_threshold = int(form.get("corner_threshold", 60))
     segment_length = int(form.get("segment_length", 4.0))
     splice_threshold = int(form.get("splice_threshold", 45))
+    tmp = bool(form.get("tmp", "False"))
     print(filter_speckle, curve_fitting, corner_threshold, segment_length, splice_threshold)
     if name in jobs:
         suffix_match = re.match(r"(.*?)__(\d+)$", name)
@@ -92,7 +93,8 @@ async def append_file(
         else:
             name = f"{name}__1"
     # Append the path to the list jobs
-    jobs.append(name)
+    if not tmp:
+        jobs.append(name)
 
     # Create a temporary file to store the uploaded file
     with open(Path(files_path, file.filename), "wb") as f:
@@ -125,6 +127,8 @@ async def append_file(
                 length_threshold=segment_length,
                 splice_threshold=splice_threshold
             )
+            convert_svg_to_gcode(Path(files_path, name + ".svg"), output_path)
+            Path(files_path, name + ".svg").unlink()
         case _:
             jobs.remove(name)
             res = JSONResponse(
