@@ -18,7 +18,7 @@ export default {
       /* Raster Images Panel */
       showRasterPanel: false,
       filter_speckle: 64,
-      curve_fitting: 'polygon' as 'polygon' | 'spline' | 'pixel',
+      curve_fitting: 'polygon' as 'polygon' | 'spline' | 'none',
       corner_threshold: 180,
       segment_length: 0,
       splice_threshold: 0,
@@ -274,7 +274,7 @@ export default {
               <select v-model="curve_fitting" class="input-field">
                 <option value="polygon">Polygon</option>
                 <option value="spline">Spline</option>
-                <option value="pixel">Pixel</option>
+                <option value="none">Pixel</option>
               </select>
             </label>
             <div v-if="curve_fitting === 'spline'" class="flex flex-col gap-4">
