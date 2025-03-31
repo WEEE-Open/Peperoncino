@@ -10,6 +10,7 @@ requires-python = ">=3.10,<3.13"
 dependencies = [
     "pyserial (>=3.5,<4.0)",
     "dotenv (>=0.9.9,<0.10.0)",
+    "vtracer (>=0.6.11,<0.7.0)",
 ]
 
 [project.optional-dependencies]

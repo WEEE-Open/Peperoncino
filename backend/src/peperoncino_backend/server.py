@@ -3,6 +3,7 @@ import os
 from pathlib import Path
 import re
 
+import vtracer
 import uvicorn
 from fastapi import FastAPI, File, Request, UploadFile
 from fastapi.responses import JSONResponse
@@ -67,11 +68,22 @@ async def get_jobs():
 
 
 @app.post("/queue")
-async def append_file(file: UploadFile = File(...)):
+async def append_file(
+    request: Request,
+    file: UploadFile = File(...)
+):
+    form = await request.form()
     name_match = re.match(r"(.*?)(?:\..*)?$", file.filename)
     name = name_match.group(1) if name_match else file.filename
     res = None
 
+    # Get parameters from form data with defaults
+    filter_speckle = int(form.get("filter_speckle", 4))
+    curve_fitting = form.get("curve_fitting", "polygon")
+    corner_threshold = int(form.get("corner_threshold", 60))
+    segment_length = int(form.get("segment_length", 4.0))
+    splice_threshold = int(form.get("splice_threshold", 45))
+    print(filter_speckle, curve_fitting, corner_threshold, segment_length, splice_threshold)
     if name in jobs:
         suffix_match = re.match(r"(.*?)__(\d+)$", name)
         if suffix_match:
@@ -102,15 +114,17 @@ async def append_file(file: UploadFile = File(...)):
             | "image/webp"
             | "application/pdf"
         ):
-            log.warning("Raster image to gcode conversion is yet to be implemented.")
-            # jobs.remove(name)
-            # res = JSONResponse(
-            #     content={
-            #         "filename": file.filename,
-            #         "message": "Raster image to gcode conversion is yet to be implemented.",
-            #     },
-            #     status_code=405,
-            # )
+            vtracer.convert_image_to_svg_py(
+                Path(files_path, file.filename).resolve().as_posix(),
+                Path(files_path, name + ".svg").resolve().as_posix(),
+                colormode='binary',        # ["color"] or "binary"
+                hierarchical='stacked',    # ["stacked"] or "cutout"
+                mode=curve_fitting,        # ["spline"] "polygon", or "none"
+                filter_speckle=filter_speckle,
+                corner_threshold=corner_threshold,
+                length_threshold=segment_length,
+                splice_threshold=splice_threshold
+            )
         case _:
             jobs.remove(name)
             res = JSONResponse(
