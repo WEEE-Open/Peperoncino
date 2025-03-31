@@ -17,7 +17,8 @@ export default {
             settingsPanelVisible: false,
             serialPortPanelVisible: false,
             uploaded: null as string | null,
-            running: false
+            running: false,
+            showFullTitle: false
         }
     },
     methods: {
@@ -121,8 +122,11 @@ export default {
     <header class="header" @dragover.prevent @drop.prevent>
         <div class="flex flex-row items-center w-full justify-between pb-4 md:px-4 lg:px-8">
             <div class="flex items-center gap-2 md:gap-4 cursor-default" @mousedown.prevent @selectstart.prevent>
-                <h1 class="pb-1 text-2xl md:text-3xl ">🌶️</h1>
-                <h1 class="font-medium tracking-widest text-xl md:text-2xl md:pl-1 lg:pl-3">PEPERONCINO</h1>
+                <h1 class="pb-1 text-2xl md:text-3xl cursor-pointer" @click="() => { showFullTitle = !showFullTitle }">🌶️</h1>
+                <h1 class="font-medium tracking-widest text-xl md:text-2xl md:pl-1 lg:pl-3">
+                    <span v-if="!showFullTitle">PEPERONCINO</span>
+                    <span v-else class="text-sm md:text-base">Plotter Estremamente Preciso E Reattivo Ottimizzato Nel Controllo Istantaneo Non Ostruibile</span>
+                </h1>
             </div>
             <div class="flex items-center gap-1 md:gap-2 lg:gap-4">
                 <button id="serial-port-icon" class="w-8 h-8">
