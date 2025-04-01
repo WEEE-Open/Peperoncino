@@ -21,7 +21,6 @@ The following piece should be read to all participants before the test begins:
 
 > The plotter is a device that can be controlled on two axes, to draw images with a pen/pencil or similar.
 > To control it, we have developed this software, named Peperoncino, that allows you to select an image for the plotter to draw and to send commands like start, pause and reset.
-> In the future we plan to allow sending raster images (like jpg, png and similar formats), but for now only SVG and GCODE is allowed.
 > (If you don't know what GCODE is don't worry - it's a format common to 3D printers, plotters, CNC machines and similar devices. You won't need it)
 > Before we start, keep in mind that we're not testing you but the software - any error or difficulty that arises is not your fault but instead it highlights a shortcoming in our design.
 
@@ -29,7 +28,6 @@ In Italian:
 
 > Il plotter è un dispositivo che può essere controllato su due assi per disegnare immagini con una penna/matita o simili.
 > Per controllarlo abbiamo sviluppato questo software, chiamato Peperoncino, che ti permette di selezionare un'immagine da far disegnare al plotter e di mandargli comandi come avvio, pausa e reset.
-> In futuro pianifichiamo di permettere di mandare immagini raster (come jpg, png e formati simili), ma per ora supportiamo solo SVG e GCODE.
 > (Se non sai cos'è GCODE non preoccuparti - è un formato comune a stampanti 3D, plotter, macchine CNC e dispositivi di questo genere. Non avrai bisogno di usarlo)
 > Prima di iniziare, ricorda che non stiamo testando te ma il software - qualsiasi errore o difficoltà non è colpa tua ma mostra una falla del nostro design.
 
