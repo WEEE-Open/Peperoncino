@@ -106,7 +106,7 @@ export default {
       this.checkConnection();
       if (this.connectionOk) {
         this.fetchState();
-        this.fetchSerialPorts();
+        // this.fetchSerialPorts();
       }
     }, 2000);
   }

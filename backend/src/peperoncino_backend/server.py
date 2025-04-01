@@ -3,7 +3,9 @@ import os
 from pathlib import Path
 import re
 
+import cv2
 import vtracer
+import hatched
 import uvicorn
 from fastapi import FastAPI, File, Request, UploadFile
 from fastapi.responses import JSONResponse
@@ -81,13 +83,34 @@ async def append_file(request: Request, file: UploadFile = File(...)):
     name = name_match.group(1) if name_match else file.filename
     res = None
 
-    # Get parameters from form data with defaults
+    tmp = form.get("tmp")
+    vectorialization_method = form.get("vectorialization_method", "trace")
+    # Trace
     filter_speckle = int(form.get("filter_speckle", 4))
     curve_fitting = form.get("curve_fitting", "polygon")
     corner_threshold = int(form.get("corner_threshold", 60))
     segment_length = int(form.get("segment_length", 4.0))
     splice_threshold = int(form.get("splice_threshold", 45))
-    tmp = form.get("tmp")
+    # Hatch
+    interpolation = form.get("interpolation", "linear")
+    match interpolation:
+        case "linear":
+            interpolation = cv2.INTER_LINEAR
+        case "nearest":
+            interpolation = cv2.INTER_NEAREST
+        case "cubic":
+            interpolation = cv2.INTER_CUBIC
+        case _:
+            interpolation = cv2.INTER_LINEAR
+
+    blur_radius = int(form.get("blur_radius", 0))
+    hatch_pitch = float(form.get("hatch_pitch", 1))
+    hatch_angle = float(form.get("hatch_angle", 0))
+    levels = int(form.get("levels", 1))
+    invert = form.get("invert", "false").lower() == "true"
+    circular = form.get("circular", "false").lower() == "true"
+    center_x = float(form.get("center_x", 0)) if circular else None
+    center_y = float(form.get("center_y", 0)) if circular else None
 
     while name in jobs:
         if file.content_type in [
@@ -138,23 +161,40 @@ async def append_file(request: Request, file: UploadFile = File(...)):
             | "image/webp"
             | "application/pdf"
         ):
-            vtracer.convert_image_to_svg_py(
-                Path(files_path, file.filename).resolve().as_posix(),
-                Path(files_path, name + ".svg").resolve().as_posix(),
-                colormode="binary",  # ["color"] or "binary"
-                mode=curve_fitting,  # ["spline"] "polygon", or "none"
-                filter_speckle=filter_speckle,
-                corner_threshold=corner_threshold,
-                length_threshold=segment_length,
-                splice_threshold=splice_threshold,
-            )
+            if vectorialization_method == "trace":
+                vtracer.convert_image_to_svg_py(
+                    Path(files_path, file.filename).resolve().as_posix(),
+                    Path(files_path, name + ".svg").resolve().as_posix(),
+                    colormode="binary",  # ["color"] or "binary"
+                    mode=curve_fitting,  # ["spline"] "polygon", or "none"
+                    filter_speckle=filter_speckle,
+                    corner_threshold=corner_threshold,
+                    length_threshold=segment_length,
+                    splice_threshold=splice_threshold,
+                )
+            elif vectorialization_method == "hatch":
+                # print(blur_radius)
+                hatched.hatch(
+                    Path(files_path, file.filename).resolve().as_posix(),
+                    hatch_pitch=hatch_pitch,
+                    # levels=levels,
+                    blur_radius=blur_radius,
+                    interpolation=interpolation,
+                    h_mirror=False,
+                    invert=invert,
+                    circular=circular,
+                    center=(center_x, center_y),
+                    hatch_angle=hatch_angle,
+                    show_plot=False,
+                    save_svg=True,
+                )
+
             try:
                 convert_svg_to_gcode(Path(files_path, name + ".svg"), output_path)
             except TypeError:
                 pass
-            else:
-                print(Path(files_path, name + ".svg").resolve().as_posix())
-                Path(files_path, name + ".svg").unlink()
+            finally:
+                Path(files_path, name + ".svg").unlink(missing_ok=True)
         case _:
             if not tmp:
                 jobs.remove(name)
@@ -167,8 +207,7 @@ async def append_file(request: Request, file: UploadFile = File(...)):
             )
 
     # Delete the temporary file
-    if Path(files_path, file.filename).exists():
-        Path(files_path, file.filename).unlink()
+    Path(files_path, file.filename).unlink(missing_ok=True)
 
     return res or JSONResponse(
         content={"filename": file.filename, "message": "File received"}, status_code=200
@@ -179,8 +218,8 @@ async def append_file(request: Request, file: UploadFile = File(...)):
 async def delete_job(job: str):
     if job in jobs:
         jobs.remove(job)
-        Path(files_path, job + ".gcode").unlink()
-        Path(previews_path, job + ".webp").unlink()
+        Path(files_path, job + ".gcode").unlink(missing_ok=True)
+        Path(previews_path, job + ".webp").unlink(missing_ok=True)
         return JSONResponse(content={"message": "Job deleted"}, status_code=200)
     elif job in default_jobs:
         return JSONResponse(
@@ -191,13 +230,28 @@ async def delete_job(job: str):
 
 @app.post("/queue/{job}")
 async def send_job(job: str):
+    file_path = None
+
     if job in jobs:
-        plotter.send(Path(files_path, job + ".gcode"))
-        return JSONResponse(content={"message": "Job sent"}, status_code=200)
+        file_path = Path(files_path, job + ".gcode")
     elif job in default_jobs:
-        plotter.send(Path(default_files_path, job + ".gcode"))
-        return JSONResponse(content={"message": "Default job sent"}, status_code=200)
-    return JSONResponse(content={"message": "Job not found"}, status_code=404)
+        file_path = Path(default_files_path, job + ".gcode")
+    else:
+        return JSONResponse(content={"message": "Job not found"}, status_code=404)
+
+    if not file_path.exists():
+        if job in jobs:
+            jobs.remove(job)
+        elif job in default_jobs:
+            default_jobs.remove(job)
+        Path(previews_path, job + ".webp").unlink(missing_ok=True)
+        return JSONResponse(
+            content={"message": "Gcode file not found"}, status_code=404
+        )
+
+    plotter.send(file_path)
+    message = "Default job sent" if job in default_jobs else "Job sent"
+    return JSONResponse(content={"message": message}, status_code=200)
 
 
 @app.get("/queue/{job}/preview")
