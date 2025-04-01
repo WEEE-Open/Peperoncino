@@ -338,9 +338,9 @@ export default {
           @drop.prevent="handleFileDrop" @click="triggerFileInput">
           <input type="file" ref="fileInput" accept=".png,.jpg,.jpeg,.gif,.svg,.txt,.gcode" class="hidden"
             @change="() => handleFileUpload(false)" />
-          <CloudUpload :size="36" />
-          <p class="capitalize md:hidden">Click here to upload a file</p>
-          <p class="capitalize opacity-0 md:opacity-100">Drag a file here or click to upload</p>
+          <CloudUpload :size="60" />
+          <p class="capitalize text-2xl md:hidden">Click here to upload a file</p>
+          <p class="capitalize text-2xl opacity-0 md:opacity-100">Drag a file here or click to upload</p>
         </div>
       </form>
     </div>

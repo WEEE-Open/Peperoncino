@@ -118,19 +118,19 @@ export default {
   <header class="header" @dragover.prevent @drop.prevent>
     <div class="flex flex-row items-center w-full justify-between pb-4 md:px-4 lg:px-8">
       <div class="flex items-center gap-2 md:gap-4 cursor-default" @mousedown.prevent @selectstart.prevent>
-        <h1 class="pb-1 text-2xl md:text-3xl cursor-pointer" @click="() => { showFullTitle = !showFullTitle }">🌶️</h1>
-        <h1 class="font-medium tracking-widest text-xl md:text-2xl md:pl-1 lg:pl-3">
+        <h1 class="pb-1 text-3xl md:text-3xl cursor-pointer" @click="() => { showFullTitle = !showFullTitle }">🌶️</h1>
+        <h1 class="font-medium tracking-widest text-4xl md:text-3xl md:pl-1 lg:pl-3">
           <span v-if="!showFullTitle">PEPERONCINO</span>
           <span v-else class="text-sm md:text-base">Plotter Estremamente Preciso E Reattivo Ottimizzato Nel Controllo
             Istantaneo Non Ostruibile</span>
         </h1>
       </div>
       <div class="flex items-center gap-1 md:gap-2 lg:gap-4">
-        <button id="serial-port-icon" class="w-8 h-8">
-          <Unplug
+        <button id="serial-port-icon">
+          <Unplug :size="30"
             :class="{ 'text-green-500 dark:text-green-600': connectionOk, 'text-red-500 dark:text-red-600': !connectionOk }" />
         </button>
-        <button id="settings-icon" class="w-8 h-8 cursor-pointer hover:text-[var(--vt-c-brand)]"
+        <button id="settings-icon" class="w-10 h-10 cursor-pointer hover:text-[var(--vt-c-brand)]"
           @click="() => { toggleSettingsPanel() }">
           <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"

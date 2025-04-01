@@ -27,6 +27,7 @@ def convert_svg_to_gcode(input_path, output_path, quantization=0.05):
             invert_x=True,
             offset_x=15,
             offset_y=20,
+            fit_page=True,
             # fit_page=True,
         )
 
@@ -38,7 +39,7 @@ def convert_gcode_to_image(input_path, output_path, format="webp"):
         img = gcode2image(
             f,
             incremental=True,
-            resolution=1 / 16,
+            resolution=1 / 8,
             maxintensity=255,
             showG0=False,
             showorigin=False,
@@ -49,6 +50,15 @@ def convert_gcode_to_image(input_path, output_path, format="webp"):
 
     pic = Image.fromarray(img, mode="LA")
     pic = pic.convert("RGBA")  # Convert to RGBA to ensure compatibility
+    max_side = 512
+    width, height = pic.size
+    if width > height:
+        new_width = max_side
+        new_height = int(height * (max_side / width))
+    else:
+        new_height = max_side
+        new_width = int(width * (max_side / height))
+    pic = pic.resize((new_width, new_height), Image.LANCZOS)
     pic.save(output_path, format, quality=80, optimize=True)
 
 

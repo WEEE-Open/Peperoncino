@@ -30,7 +30,7 @@ a,
 
 @media (prefers-color-scheme: dark) {
   .previewImage {
-    filter: invert(1);
+    filter: contrast(1.5) brightness(1.5) invert(1);
   }
 }
 /* @media (min-width: 1024px) {

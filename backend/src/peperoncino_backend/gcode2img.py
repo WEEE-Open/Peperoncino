@@ -163,7 +163,7 @@ def gcode2image(
                     (x - X_start, y - Y_start),
                     (X - X_start, Y - Y_start),
                     pixel_intensity(
-                        255 if G1_mode else G0_gray
+                        max_laser_power if G1_mode else G0_gray
                     ),  # pixel_intensity(S if S is not None else G0_gray),
                 )
             x = X

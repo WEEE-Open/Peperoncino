@@ -47,20 +47,22 @@ export default {
   <div
     class="flex bg-[var(--color-background-soft)] p-2 pr-5 rounded-lg w-full justify-between align-middle items-center">
     <div class="flex flex-row items-center">
-      <img v-if="preview" :src="preview" alt="Preview" class="previewImage w-10 h-10 rounded-lg object-cover" />
-      <h2 class="pl-3">{{ job }}</h2>
+      <div class="w-14 h-14 flex flex-row justify-center align-middle rounded-lg bg-[var(--color-background)] p-2">
+        <img v-if="preview" :src="preview" alt="Preview" class="previewImage w-auto h-auto rounded-lg object-cover" />
+      </div>
+      <h2 class="pl-3 text-xl">{{ job }}</h2>
     </div>
     <div class="flex gap-3 items-center align-middle">
       <button v-if="running" @click="() => pause(job as string)" class="cursor-pointer">
-        <Pause :size="16" class="hover:text-neutral-600 dark:hover:text-neutral-400 transition-colors" />
+        <Pause :size="24" class="hover:text-neutral-600 dark:hover:text-neutral-400 transition-colors" />
       </button>
       <div v-else-if="uploaded" class="flex gap-3 items-center align-middle">
         <button @click="() => start(job as string)" class="cursor-pointer">
-          <Play :size="16"
+          <Play :size="24"
             class="text-green-500 dark:text-green-600 hover:text-green-600 dark:hover:text-green-700 transition-colors" />
         </button>
         <button @click="() => reset(job as string)" class="cursor-pointer">
-          <RotateCcw :size="16" class="hover:text-neutral-600 dark:hover:text-neutral-400 transition-colors" />
+          <RotateCcw :size="24" class="hover:text-neutral-600 dark:hover:text-neutral-400 transition-colors" />
         </button>
       </div>
       <div v-else class="flex justify-center">
@@ -74,11 +76,11 @@ export default {
         </div>
         <button v-else @click="() => upload(job as string)"
           class="cursor-pointer hover:text-neutral-600 dark:hover:text-neutral-400 transition-colors">
-          <Upload :size="16" />
+          <Upload :size="24" />
         </button>
       </div>
       <button v-if="not_default" @click="() => remove(job as string)" class="cursor-pointer">
-        <Trash2 :size="16"
+        <Trash2 :size="24"
           class="text-red-500 dark:text-red-600 transition-colors hover:text-red-600 hover:dark:text-red-700" />
       </button>
     </div>
