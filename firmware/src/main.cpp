@@ -9,7 +9,7 @@
 
 TaskHandle_t Task1;
 
-bool running = false;
+volatile bool running = false;
 
 char **gcode = nullptr;
 unsigned int length;
@@ -45,6 +45,8 @@ void setup()
       &Task1,             /* Task handle. */
       0                   /* Core where the task should run */
   );
+  running = false;
+  line = 0;
   // Serial.println(heap_caps_get_free_size(MALLOC_CAP_8BIT));
   // move(1, 0);
   // move(1, 1);
@@ -56,7 +58,7 @@ void setup()
   // Serial.printf("Network: %s\n", WiFi.softAPIP().toString());
   // connect(ssid, password);
   // Serial.printf("IP: %s\n", WiFi.localIP().toString());
-  Serial.println("Setup Done");
+  // Serial.println("Setup Done");
 }
 
 void loop()
@@ -70,7 +72,6 @@ void loop()
     if (line == length) {
       running = false;
       line = 0;
-      send_confirmation_signal();
     }
   }
   

@@ -69,12 +69,12 @@ void parse_gcode_line(const char *line)
     }
     else if (strcmp(cmd, "G20") == 0)
     { // interpret as inches
-        Serial.println("Inches");
+        // Serial.println("Inches");
         mm = false;
     }
     else if (strcmp(cmd, "G21") == 0)
     { // interpret as mm
-        Serial.println("mm");
+        // Serial.println("mm");
         mm = true;
     }
     else if (strcmp(cmd, "G90") == 0)
@@ -83,13 +83,13 @@ void parse_gcode_line(const char *line)
     }
     else if (strcmp(cmd, "M2") == 0)
     { // end of program
-        Serial.println("Stop");
+        // Serial.println("Stop");
         setPenUp();
         move(0, 0, true);
     }
     else
     {
-        Serial.printf("Received Unknown Command: %s\n", line);
+        // Serial.printf("Received Unknown Command: %s\n", line);
         // Handle other commands or do nothing
     }
 }

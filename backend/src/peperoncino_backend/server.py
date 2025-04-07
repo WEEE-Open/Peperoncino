@@ -1,3 +1,4 @@
+from json import JSONDecodeError
 import logging
 import os
 from pathlib import Path
@@ -304,7 +305,10 @@ async def get_speed():
 
 @app.post("/speed")
 async def set_speed(request: Request):
-    data = await request.json()
+    try:
+        data = await request.json()
+    except JSONDecodeError:
+        return JSONResponse(content={"message": "Speed not provided"}, status_code=400)
     speed = data.get("speed")
     if speed:
         plotter.speed = speed
@@ -316,7 +320,7 @@ async def set_speed(request: Request):
 
 @app.get("/state")
 async def get_state():
-    plotter.check_confirmation()
+    plotter.check_running()
     uploaded, running = plotter.state
     data = {
         "uploaded": uploaded.stem if uploaded else None,
