@@ -18,21 +18,21 @@ double delay_multiplier = 100/8.;
 
 void start()
 {
-    Serial.println("Start");
+    // Serial.println("Start");
     running = true;
     //     triggerInterrupt();
 }
 
 void stop()
 {
-    Serial.println("Stop");
+    // Serial.println("Stop");
     running = false;
     //     triggerInterrupt();
 }
 
 void reset()
 {
-    Serial.println("Reset");
+    // Serial.println("Reset");
     running = false;
     delay(100);
     line = 0;
@@ -46,7 +46,7 @@ void readGCodeFile()
     size_t received_size;
     char buffer[64];
 
-    Serial.println("Read");
+    // Serial.println("Read");
 
     bool tmp = running; // pause the execution
     running = false;
@@ -82,7 +82,7 @@ void readGCodeFile()
         // Serial.printf("Parsing Line: %s\n", gcode[i]);
     }
 
-    Serial.printf("Received length %u\n", length);
+    // Serial.printf("Received length %u\n", length);
     running = tmp;
 }
 
@@ -91,7 +91,7 @@ void readOnlineGCode() {
     size_t received_size;
     char buffer[64];
 
-    Serial.println("Read Online");
+    // Serial.println("Read Online");
 
     running = false;
 
@@ -103,7 +103,7 @@ void readOnlineGCode() {
     }
 
 
-    Serial.printf("Received length %u\n", length);
+    // Serial.printf("Received length %u\n", length);
 
 
     for (unsigned int i = 0; i < length; i++)
@@ -116,29 +116,31 @@ void readOnlineGCode() {
         parse_gcode_line(buffer);
     }
 
-    Serial.println("Done");
-}
-
-void send_confirmation_signal() {
-    Serial.printf("Done %d\n", length);
+    // Serial.println("Done");
 }
 
 void readDelayMultiplier() {
     bool tmp = running;
     running = false;
-    Serial.println("Delay");
+    // Serial.println("Delay");
     double received_delay = 0x0;
 
-    for (int i = 0; i < 8; i++)
-    {
-        while (Serial.available() <= 0) {}
-        received_delay |= (Serial.read() << (8 * i));
-    }
+    while (Serial.available() < 8) {}
+    Serial.readBytes((char*)&received_delay, 8);
+    // for (int i = 0; i < 8; i++)
+    // {
+    //     while (Serial.available() <= 0) {}
+    //     // (void)(received_delay) |= (Serial.read() << (8 * i));
+    // }
 
-    Serial.printf("Received delay %f\n", received_delay);
+    // Serial.printf("Received delay %f\n", received_delay);
 
     delay_multiplier = received_delay;
     running = tmp;
+}
+
+void writeState() {
+    Serial.printf("%i", running);
 }
 
 void handleBackendComms(void *parameter)
@@ -160,7 +162,7 @@ void handleBackendComms(void *parameter)
             }
             else
             {
-                Serial.println("Unknown command received");
+                // Serial.println("Unknown command received");
             }
         }
     }

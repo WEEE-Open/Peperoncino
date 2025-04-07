@@ -120,7 +120,6 @@ class Plotter:
     def start(self):
         self.safe_write(struct.pack("B", 0x00))
         self._running = True
-        # TODO: Start a thread to wait for the plotter to send a stop signal
 
     def pause(self):
         self.safe_write(struct.pack("B", 0x01))
@@ -151,16 +150,17 @@ class Plotter:
         for line in itr:
             self.safe_write(line)
 
-    def _read_confirmation(self) -> int | None:
-        if self.serial:
-            line = self.serial.readline()
-            if line.startswith(b"Done"):
-                return int(line.strip().split(b" ")[-1])
-
-    def check_confirmation(self):
-        if self._read_confirmation():
-            self._running = False
-
+    def check_running(self) -> int | None:
+        self.safe_write(struct.pack("B", 0x06))
+        received = self.serial.read(1)
+        while received == b'':
+            received = self.serial.read(1)
+            
+        self._running = bool(int(received))
+        print(self._running)
+        print(received)
+        print()
+        return self._running
 
 def get_available_ports() -> list[dict]:
     def jsonserialize(device):

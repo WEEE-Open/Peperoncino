@@ -20,13 +20,13 @@ void connect(const char *ssid, const char *pass)
     while (WiFi.status() != WL_CONNECTED | WiFi.status() != WL_CONNECT_FAILED)
     {
         delay(500);
-        Serial.print(".");
+        // Serial.print(".");
     }
     // Print local IP address and start web server
     station_ip = WiFi.localIP().toString();
-    Serial.println("");
-    Serial.println("WiFi connected.");
-    Serial.printf("IP address: %s\n", station_ip);
+    // Serial.println("");
+    // Serial.println("WiFi connected.");
+    // Serial.printf("IP address: %s\n", station_ip);
 }
 
 void server_listen()
@@ -37,7 +37,7 @@ void server_listen()
     { // If a new client connects,
         currentTime = millis();
         previousTime = currentTime;
-        Serial.println("New Client."); // print a message out in the serial port
+        // Serial.println("New Client."); // print a message out in the serial port
         String currentLine = "";       // make a String to hold incoming data from the client
         while (client.connected() && currentTime - previousTime <= timeoutTime)
         { // loop while the client's connected
@@ -59,7 +59,7 @@ void server_listen()
                         client.println("Content-type:text/html");
                         client.println("Connection: close");
                         client.println();
-                        Serial.println(header);
+                        // Serial.println(header);
 
                         // turns the GPIOs on and off
                         if (header.indexOf("GET /") >= 0)
@@ -107,7 +107,7 @@ void server_listen()
         header = "";
         // Close the connection
         client.stop();
-        Serial.println("Client disconnected.");
-        Serial.println("");
+        // Serial.println("Client disconnected.");
+        // Serial.println("");
     }
 }
