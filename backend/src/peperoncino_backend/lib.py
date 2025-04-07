@@ -155,11 +155,8 @@ class Plotter:
         received = self.serial.read(1)
         while received == b'':
             received = self.serial.read(1)
-            
+
         self._running = bool(int(received))
-        print(self._running)
-        print(received)
-        print()
         return self._running
 
 def get_available_ports() -> list[dict]:
